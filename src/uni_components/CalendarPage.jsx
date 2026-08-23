@@ -137,86 +137,31 @@ export function CalendarPage({ onClose }) {
   const [selectedOverlay, setSelectedOverlay] = useState(null);
 
   const containerRef = useRef(null);
-  const cardRef = useRef(null);
-  const headerRef = useRef(null);
 
-  const handleWheel = useCallback((e) => {
-    if (!containerRef.current) return;
-    // Only intercept horizontal gestures (trackpad swipe). Let vertical scroll
-    // (deltaY dominant, e.g. mouse wheel) pass through to the page.
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      e.preventDefault();
-      containerRef.current.scrollLeft += e.deltaX;
-    }
-  }, []);
-  const handleMouseEnter = () => containerRef.current?.addEventListener('wheel', handleWheel, { passive: false });
-  const handleMouseLeave = () => containerRef.current?.removeEventListener('wheel', handleWheel);
+  // There was a non-passive wheel listener here that mirrored horizontal deltas
+  // into scrollLeft by hand. overflow-x:auto already does exactly that natively,
+  // and writing scrollLeft per wheel event inside a mandatory snap container
+  // makes the browser re-resolve the snap position every frame — visible
+  // trackpad stutter. overscroll-behavior-x:contain (CalendarPage.css) covers
+  // the other thing it was doing, keeping the gesture off the page behind.
 
   // Tracks which day column sits closest to the row's horizontal center as the
   // user scrolls, so its label can highlight the same way the day dots do.
   const [activeDayIndex, setActiveDayIndex] = useState(0);
 
-  // Under 700px the week view is sized to fit .calpg-card exactly, so the card
-  // itself never scrolls and the day tabs stay in view — instead the active
-  // day's event list scrolls inside its own box (--calpg-day-events-h, applied
-  // in CalendarPage.css), and each poster fills that box.
+  // Under 700px the week view is sized to fit .calpg-card exactly — the card
+  // itself never scrolls, the day tabs stay in view, and the active day's event
+  // list scrolls inside its own box with each poster filling that box. All of it
+  // is now a plain flex height chain in CalendarPage.css (see "NARROW WEEK VIEW
+  // LAYOUT"): the card's height is definite, so the row, the events box and the
+  // event card can each just take what's left of it. The poster's width follows
+  // from its height via a fixed aspect-ratio.
   //
-  // Sticky can't do this job here: .calpg-week-row needs overflow-x:auto for the
-  // horizontal day slider, and CSS won't pair that with overflow-y:visible — it
-  // computes to a non-visible value, which makes the row itself the sticky
-  // containing block for everything inside it. A sticky day title therefore
-  // scrolls away with the card rather than pinning to it, and its `top` offset
-  // just displaces it downward into the poster.
-  //
-  // Measured rather than computed from percentages, since "space left inside a
-  // scrolling ancestor after its sticky header" isn't expressible in CSS.
-  // Re-measured via ResizeObserver (font loading, orientation change, the
-  // header's own responsive sizing) rather than only on mount.
-  const [imgWrapHeight, setImgWrapHeight] = useState(null);
-  useLayoutEffect(() => {
-    if (viewMode !== 'week') return;
-
-    const measure = () => {
-      const card = cardRef.current;
-      const header = headerRef.current;
-      const row = containerRef.current;
-      if (!card || !header || !row || !window.matchMedia('(max-width: 700px)').matches) {
-        setImgWrapHeight(null);
-        card?.style.removeProperty('--calpg-day-events-h');
-        return;
-      }
-
-      const dayTitle = row.querySelector('.day-title-number');
-      const dayCol = row.querySelector('.calpg-week-day');
-      const event = row.querySelector('.calendar-event');
-
-      // .calendar-day's own vertical padding and .calendar-event's bottom margin
-      // are both inside this budget. Leaving them out is what pushed the poster
-      // past the card's bottom edge.
-      const colPad = dayCol
-        ? parseFloat(getComputedStyle(dayCol).paddingTop) +
-          parseFloat(getComputedStyle(dayCol).paddingBottom)
-        : 0;
-      const eventGap = event ? parseFloat(getComputedStyle(event).marginBottom) : 0;
-
-      const eventsH = Math.max(
-        0,
-        card.clientHeight - header.offsetHeight - (dayTitle?.offsetHeight ?? 0) - colPad - 3
-      );
-      card.style.setProperty('--calpg-day-events-h', `${eventsH}px`);
-      setImgWrapHeight(Math.max(0, eventsH - eventGap));
-    };
-
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (cardRef.current) ro.observe(cardRef.current);
-    if (headerRef.current) ro.observe(headerRef.current);
-    window.addEventListener('resize', measure);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', measure);
-    };
-  }, [viewMode, activeDayIndex]);
+  // This used to be measured here (card − header − day title − padding, written
+  // out as --calpg-day-events-h, plus a per-image width set from its laid-out
+  // height). That was only necessary because the poster's ratio was `auto`,
+  // which makes width↔height circular; pinning the ratio breaks the cycle and
+  // CSS can do the whole thing on its own.
 
   // Populates state when the calendar was opened without a prior hover (keyboard, touch,
   // a very fast click). On a warm cache prefetchCalendar resolves from memory, so this
@@ -261,33 +206,30 @@ export function CalendarPage({ onClose }) {
     });
   }, [weeklyEvents, todayDate]);
 
-  // The card hugs the poster (width: fit-content, CalendarPage.css), but CSS
-  // can't derive that width from the poster's flex-computed height on its own —
-  // it's circular, so the browser falls back to the image's intrinsic width and
-  // the poster renders distorted (hidden only by object-fit cropping). Setting
-  // the width explicitly from the already-laid-out height breaks the cycle:
-  // height stays flex-driven and fills the card, width follows the natural
-  // ratio, and the card then hugs that. Measured after layout rather than
-  // guessed, and re-applied per image via onLoad since naturalWidth is 0 until
-  // the poster actually arrives.
-  const fitPosterWidth = useCallback((img) => {
-    if (!img) return;
-    if (imgWrapHeight == null || !img.naturalWidth || !img.naturalHeight) {
-      img.style.removeProperty('width');
-      return;
-    }
-    const h = img.getBoundingClientRect().height;
-    if (!h) return;
-    img.style.width = `${h * (img.naturalWidth / img.naturalHeight)}px`;
-  }, [imgWrapHeight]);
+  // One poster fills the whole events box, so a day with several events shows
+  // nothing below the fold and the scrollbar is hidden — without a cue there's
+  // no way to tell the extra events are there. Mirrors .cal-overlay-more-arrow
+  // in CalendarModule, including its 10px slack for sub-pixel rounding.
+  const [dayHasMore, setDayHasMore] = useState(false);
+  const updateDayHasMore = useCallback(() => {
+    const el = containerRef.current?.querySelector('.calpg-week-day-events--active');
+    setDayHasMore(!!el && el.scrollHeight - el.scrollTop - el.clientHeight > 10);
+  }, []);
 
+  // Observed rather than only recomputed on state change: the box's height is
+  // CSS-derived now, so it moves for reasons React never sees (font loading,
+  // rotation, the header's own responsive sizing) — and whether anything
+  // overflows moves with it. `status` and `weekDays` are in the deps because on
+  // a cold load this component returns the skeleton branch first, so the ref
+  // isn't attached yet and there'd be nothing to observe.
   useLayoutEffect(() => {
-    // Every poster, not just the filled ones — so an inline width left over from
-    // a narrower viewport is cleared once the fill layout no longer applies.
-    containerRef.current
-      ?.querySelectorAll('.cal-portrait-img')
-      .forEach(fitPosterWidth);
-  }, [fitPosterWidth, activeDayIndex, viewMode, weekDays, posterSize]);
+    updateDayHasMore();
+    const el = containerRef.current?.querySelector('.calpg-week-day-events--active');
+    if (!el) return;
+    const ro = new ResizeObserver(updateDayHasMore);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [updateDayHasMore, status, activeDayIndex, viewMode, weekDays, posterSize]);
 
   useEffect(() => {
     const row = containerRef.current;
@@ -527,8 +469,8 @@ export function CalendarPage({ onClose }) {
 
   return (
     <>
-      <div className="calpg-card" ref={cardRef}>
-        <div className="calpg-header" ref={headerRef}>
+      <div className={`calpg-card${viewMode === 'week' ? ' calpg-card--week' : ''}`}>
+        <div className="calpg-header">
           <div className="calpg-tree-wrap">
             <img src={treeImg} alt="" className="calpg-tree-img" />
           </div>
@@ -554,8 +496,6 @@ export function CalendarPage({ onClose }) {
           <div
             className="calendar-container calpg-week-row"
             ref={containerRef}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
           >
             {weekDays.map((day, i) => (
               <div key={day.date.toISOString()} className={`calendar-day calpg-week-day${day.isToday ? ' today' : ''}`}>
@@ -575,7 +515,10 @@ export function CalendarPage({ onClose }) {
                   </span>
                   <span className={`calpg-day-num${i === activeDayIndex ? ' calpg-day-num--active' : ''}`}>{day.sublabel}</span>
                 </div>
-                <div className={`calpg-week-day-events${i === activeDayIndex ? ' calpg-week-day-events--active' : ''}`}>
+                <div
+                  className={`calpg-week-day-events${i === activeDayIndex ? ' calpg-week-day-events--active' : ''}${posterSize === 'maximized' && day.events.length > 1 ? ' calpg-week-day-events--paged' : ''}`}
+                  onScroll={i === activeDayIndex ? updateDayHasMore : undefined}
+                >
                 {day.events.length === 0 ? (
                   /* Looks exactly like the bare "No events" text it replaces —
                      .calendar-event is a button reset, so no background, border
@@ -584,7 +527,6 @@ export function CalendarPage({ onClose }) {
                      day swipe, rather than only the slider strip at the top. */
                   <div
                     className="calendar-event calendar-event--empty"
-                    style={imgWrapHeight != null ? { height: `${imgWrapHeight}px` } : undefined}
                   >
                     <p>No events</p>
                   </div>
@@ -623,10 +565,7 @@ export function CalendarPage({ onClose }) {
                             </div>
                           </div>
                         ) : (
-                          <div
-                            className={`cal-portrait-img-wrap${imgWrapHeight != null ? ' cal-portrait-img-wrap--fill' : ''}`}
-                            style={imgWrapHeight != null ? { height: `${imgWrapHeight}px` } : undefined}
-                          >
+                          <div className="cal-portrait-img-wrap">
                             <img src={borderImg} alt="" className="cal-portrait-card-border cal-portrait-card-border-left" />
                             <img src={borderImg} alt="" className="cal-portrait-card-border cal-portrait-card-border-right" />
                             <div
@@ -641,7 +580,6 @@ export function CalendarPage({ onClose }) {
                               src={posterUrl || '/raccoon_pfp.png'}
                               alt=""
                               className={`cal-portrait-img${posterUrl ? '' : ' cal-portrait-img--default'}`}
-                              onLoad={(e) => fitPosterWidth(e.currentTarget)}
                             />
                             <PortraitTitle text={titleText} />
                             <FriendRsvpCallout friends={friends} />
@@ -652,6 +590,9 @@ export function CalendarPage({ onClose }) {
                   })
                 )}
                 </div>
+                {i === activeDayIndex && dayHasMore && (
+                  <div className="calpg-day-more-arrow" aria-hidden="true">&#8964;</div>
+                )}
               </div>
             ))}
           </div>
@@ -693,84 +634,91 @@ export function CalendarPage({ onClose }) {
             </div>
           )
         )}
+      </div>
 
-        {selectedOverlay !== null && (
-          <div className="cal-overlay-backdrop" onClick={() => setSelectedOverlay(null)}>
-            <div className="cal-overlay-portrait" onClick={e => e.stopPropagation()}>
-              <button className="cal-overlay-close" onClick={() => setSelectedOverlay(null)}>✕</button>
-              <h2 className="cal-overlay-date">
-                {format(selectedOverlayDate, 'EEE d').toUpperCase()}
-              </h2>
-              <div className="cal-portrait-scroll">
-                {selectedDayEvents.map(event => {
-                  // See the comment at the other clubName assignment above: live club data
-                  // wins over the stale creation-time snapshot stored on the event itself.
-                  const clubName = clubNameById.get(event.club_id) || event.club_name || '';
-                  const eventName = event.event_name || '';
-                  const titleText = clubName && eventName
-                    ? `${clubName} • ${eventName}`
-                    : (clubName || eventName);
-                  const friends = selectedDayFriendRsvpMap.get(event.id);
-                  const posterUrl = event.event_image_url || event.image_url || clubImageById.get(event.club_id);
-                  return (
-                  <div key={event.id} className="cal-portrait-event">
-                    <div className="cal-portrait-img-wrap">
-                      <img src={borderImg} alt="" className="cal-portrait-card-border cal-portrait-card-border-left" />
-                      <img src={borderImg} alt="" className="cal-portrait-card-border cal-portrait-card-border-right" />
-                      <div
-                        className="cal-portrait-card-border-h cal-portrait-card-border-h-top"
-                        style={{ backgroundImage: `url(${borderHorizontalImg})` }}
-                      />
-                      <img
-                        src={posterUrl || '/raccoon_pfp.png'}
-                        alt="Event"
-                        className={`cal-portrait-img${posterUrl ? '' : ' cal-portrait-img--default'}`}
-                      />
-                    </div>
-                    <div className="cal-portrait-info">
-                      <img src={borderImg} alt="" className="cal-portrait-info-border cal-portrait-info-border-left" />
-                      <img src={borderImg} alt="" className="cal-portrait-info-border cal-portrait-info-border-right" />
-                      <div
-                        className="cal-portrait-card-border-h cal-portrait-card-border-h-bottom"
-                        style={{ backgroundImage: `url(${borderHorizontalImg})` }}
-                      />
-                      <PortraitTitle text={titleText} />
-                      <FriendRsvpCallout friends={friends} />
-                      {event.where && (
-                        <p className="cal-info-row">
-                          <span className="cal-info-label">where</span>
-                          <span className="cal-info-value">{event.where}</span>
-                        </p>
-                      )}
-                      <p className="cal-info-row">
-                        <span className="cal-info-label">when</span>
-                        <span className="cal-info-value">
-                          {format(parseISO(event.start_time), 'EEE MMM d')} {format(parseISO(event.start_time), 'h:mm a')}–{format(parseISO(event.end_time), 'h:mm a')}
-                        </span>
-                      </p>
-                      {event.event_description && (
-                        <p className="cal-info-row">
-                          <span className="cal-info-label">about</span>
-                          <span className="cal-info-value">{event.event_description}</span>
-                        </p>
-                      )}
-                      {userId && event.club_id && (
-                        <button
-                          className="rsvp-button"
-                          onClick={() => selectedDayRsvpHandler(event.id, selectedDayRsvpSet.has(event.id))}
-                        >
-                          {selectedDayRsvpSet.has(event.id) ? 'Going ✓' : "I'm going!"}
-                        </button>
-                      )}
-                    </div>
+      {/* Outside .calpg-card on purpose. The card is a container-query container
+          (container-type, CalendarPage.css) and a clipping box (overflow:hidden)
+          in the narrow week layout; per spec container-type implies layout
+          containment, which would make the card the containing block for this
+          position:fixed backdrop and then clip it. Chromium does not do that for
+          inline-size, but rather than depend on that, the overlay lives out here
+          with the toggles, where inset:0 can only ever mean the viewport. */}
+      {selectedOverlay !== null && (
+        <div className="cal-overlay-backdrop" onClick={() => setSelectedOverlay(null)}>
+          <div className="cal-overlay-portrait" onClick={e => e.stopPropagation()}>
+            <button className="cal-overlay-close" onClick={() => setSelectedOverlay(null)}>✕</button>
+            <h2 className="cal-overlay-date">
+              {format(selectedOverlayDate, 'EEE d').toUpperCase()}
+            </h2>
+            <div className="cal-portrait-scroll">
+              {selectedDayEvents.map(event => {
+                // See the comment at the other clubName assignment above: live club data
+                // wins over the stale creation-time snapshot stored on the event itself.
+                const clubName = clubNameById.get(event.club_id) || event.club_name || '';
+                const eventName = event.event_name || '';
+                const titleText = clubName && eventName
+                  ? `${clubName} • ${eventName}`
+                  : (clubName || eventName);
+                const friends = selectedDayFriendRsvpMap.get(event.id);
+                const posterUrl = event.event_image_url || event.image_url || clubImageById.get(event.club_id);
+                return (
+                <div key={event.id} className="cal-portrait-event">
+                  <div className="cal-portrait-img-wrap">
+                    <img src={borderImg} alt="" className="cal-portrait-card-border cal-portrait-card-border-left" />
+                    <img src={borderImg} alt="" className="cal-portrait-card-border cal-portrait-card-border-right" />
+                    <div
+                      className="cal-portrait-card-border-h cal-portrait-card-border-h-top"
+                      style={{ backgroundImage: `url(${borderHorizontalImg})` }}
+                    />
+                    <img
+                      src={posterUrl || '/raccoon_pfp.png'}
+                      alt="Event"
+                      className={`cal-portrait-img${posterUrl ? '' : ' cal-portrait-img--default'}`}
+                    />
                   </div>
-                  );
-                })}
-              </div>
+                  <div className="cal-portrait-info">
+                    <img src={borderImg} alt="" className="cal-portrait-info-border cal-portrait-info-border-left" />
+                    <img src={borderImg} alt="" className="cal-portrait-info-border cal-portrait-info-border-right" />
+                    <div
+                      className="cal-portrait-card-border-h cal-portrait-card-border-h-bottom"
+                      style={{ backgroundImage: `url(${borderHorizontalImg})` }}
+                    />
+                    <PortraitTitle text={titleText} />
+                    <FriendRsvpCallout friends={friends} />
+                    {event.where && (
+                      <p className="cal-info-row">
+                        <span className="cal-info-label">where</span>
+                        <span className="cal-info-value">{event.where}</span>
+                      </p>
+                    )}
+                    <p className="cal-info-row">
+                      <span className="cal-info-label">when</span>
+                      <span className="cal-info-value">
+                        {format(parseISO(event.start_time), 'EEE MMM d')} {format(parseISO(event.start_time), 'h:mm a')}–{format(parseISO(event.end_time), 'h:mm a')}
+                      </span>
+                    </p>
+                    {event.event_description && (
+                      <p className="cal-info-row">
+                        <span className="cal-info-label">about</span>
+                        <span className="cal-info-value">{event.event_description}</span>
+                      </p>
+                    )}
+                    {userId && event.club_id && (
+                      <button
+                        className="rsvp-button"
+                        onClick={() => selectedDayRsvpHandler(event.id, selectedDayRsvpSet.has(event.id))}
+                      >
+                        {selectedDayRsvpSet.has(event.id) ? 'Going ✓' : "I'm going!"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                );
+              })}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {viewMode === 'week' && (
         <div className="calpg-poster-size-toggle">
