@@ -1306,6 +1306,14 @@
     color: #3b3c3c;
     pointer-events: none;
     animation: cal-arrow-bounce 1.4s ease-in-out infinite;
+    /* IoChevronDownCircle is one filled path — the ring and the chevron are
+       cut from the same shape, so the chevron (and the thin margin around the
+       ring, inside this 34x34 box) is transparent, not "empty". Sitting over
+       a poster, that let whatever photo was underneath show through instead
+       of a clean white. A round background behind the glyph, sized to the box
+       an SVG element gets one like any other element, fills that gap. */
+    background-color: #fff;
+    border-radius: 50%;
   }
 
   @keyframes cal-arrow-bounce {
