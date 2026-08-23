@@ -16,10 +16,9 @@ import PortraitTitle from './PortraitTitle';
 import treeImg from '/src/assets/tree.png';
 import borderImg from '../assets/border.svg';
 import borderHorizontalImg from '../assets/border-horizontal.svg';
-import minimizedPosterActiveIcon from '../assets/Minimized_poster_icon_active.png';
-import minimizedPosterInactiveIcon from '../assets/Minimized_poster_icon_inactive.png';
-import maximizedPosterActiveIcon from '../assets/Maximized_poster_icon_active.png';
-import maximizedPosterInactiveIcon from '../assets/Maximized_poster_icon_inactive.png';
+import { TbCropPortrait } from 'react-icons/tb';
+import { GiHamburgerMenu } from 'react-icons/gi';
+import { IoChevronDownCircle } from 'react-icons/io5';
 
 const WEEK_DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -501,12 +500,7 @@ export function CalendarPage({ onClose }) {
               <div key={day.date.toISOString()} className={`calendar-day calpg-week-day${day.isToday ? ' today' : ''}`}>
                 <div className="day-title-number calpg-day-title">
                   <span className={`calpg-day-label${i === activeDayIndex ? ' calpg-day-label--active' : ''}`}>
-                    {day.isToday ? (
-                      <>
-                        <span className="calpg-today-full">Today</span>
-                        <span className="calpg-today-abbr">TD</span>
-                      </>
-                    ) : (
+                    {day.isToday ? 'Today' : (
                       <>
                         <span className="calpg-day-full">{day.fullLabel}</span>
                         <span className="calpg-day-abbr">{day.label}</span>
@@ -591,7 +585,7 @@ export function CalendarPage({ onClose }) {
                 )}
                 </div>
                 {i === activeDayIndex && dayHasMore && (
-                  <div className="calpg-day-more-arrow" aria-hidden="true">&#8964;</div>
+                  <IoChevronDownCircle className="calpg-day-more-arrow" aria-hidden="true" />
                 )}
               </div>
             ))}
@@ -724,21 +718,21 @@ export function CalendarPage({ onClose }) {
         <div className="calpg-poster-size-toggle">
           <button
             type="button"
-            className="calpg-poster-size-btn calpg-poster-size-btn--min"
+            className={`calpg-poster-size-btn calpg-poster-size-btn--min${posterSize === 'minimized' ? ' calpg-poster-size-btn--active' : ''}`}
             aria-label="Minimized poster view"
             aria-pressed={posterSize === 'minimized'}
             onClick={() => setPosterSize('minimized')}
           >
-            <img src={posterSize === 'minimized' ? minimizedPosterActiveIcon : minimizedPosterInactiveIcon} alt="" />
+            <GiHamburgerMenu />
           </button>
           <button
             type="button"
-            className="calpg-poster-size-btn"
+            className={`calpg-poster-size-btn${posterSize === 'maximized' ? ' calpg-poster-size-btn--active' : ''}`}
             aria-label="Maximized poster view"
             aria-pressed={posterSize === 'maximized'}
             onClick={() => setPosterSize('maximized')}
           >
-            <img src={posterSize === 'maximized' ? maximizedPosterActiveIcon : maximizedPosterInactiveIcon} alt="" />
+            <TbCropPortrait />
           </button>
         </div>
       )}

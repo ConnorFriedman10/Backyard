@@ -968,12 +968,20 @@
   padding: 0;
   line-height: 0;
   cursor: pointer;
+  /* Was two swapped PNGs (one per active/inactive state); now one react-icons
+     svg per button, so the active state is a color change instead. */
+  color: #999;
+  transition: color 150ms ease;
 }
 
-.calpg-poster-size-btn img {
+.calpg-poster-size-btn svg {
   display: block;
-  height: 16px;
-  width: auto;
+  height: 22px;
+  width: 22px;
+}
+
+.calpg-poster-size-btn--active {
+  color: #e8793a;
 }
 
 @media (max-width: 700px) {
@@ -1054,24 +1062,9 @@
 }
 
 /* The week view's first day is always today (weekDays starts from todayDate in
-   CalendarPage.jsx) — "Today"/"TD" instead of the weekday name, with its own 500px
-   breakpoint independent of the 700px one above for every other day. */
-.calpg-today-full {
-  display: inline;
-}
-
-.calpg-today-abbr {
-  display: none;
-}
-
-@media (max-width: 500px) {
-  .calpg-today-full {
-    display: none;
-  }
-  .calpg-today-abbr {
-    display: inline;
-  }
-}
+   CalendarPage.jsx) and reads "Today" rather than its weekday name — at every
+   width, so the .calpg-today-full/-abbr pair and their 500px breakpoint are
+   gone. Every other day still abbreviates under 700px via .calpg-day-abbr. */
 
 /* ===== INLINE CALENDAR MONTH VIEW WEEKDAY HEADER (S M T W T F S) ===== */
 .calpg-weekday-label {
@@ -1298,23 +1291,19 @@
 
   /* Sibling of the scrolling box, not a child — inside it, it would scroll away
      with the content it's advertising. Matches .cal-overlay-more-arrow
-     (CalendarModule.css), the same cue in the club-page lightbox. */
+     (CalendarModule.css), the same cue in the club-page lightbox.
+     react-icons' IoChevronDownCircle already draws its own circle-and-chevron
+     glyph, so — unlike the old unicode-arrow-in-a-badge version — there's no
+     separate background-color/border-radius here; the svg is sized directly. */
   .calpg-day-more-arrow {
     position: absolute;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    line-height: 1;
-    color: rgba(255, 255, 255, 0.85);
-    background-color: #4e7da9;
-    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    color: #3b3c3c;
     pointer-events: none;
     animation: cal-arrow-bounce 1.4s ease-in-out infinite;
   }
@@ -1364,6 +1353,12 @@
   margin: 0;
   text-align: center;
   font-family: "Barlow Condensed", sans-serif;
+  /* One step up in size from the inherited body text — it's the only thing in
+     an otherwise empty card, so it was reading as too faint and small. Lighter
+     gray than .calpg-weekday-label's #3b3c3c: this is a placeholder for an
+     empty state, not a label, and shouldn't read as dark as real content. */
+  font-size: 1.35rem;
+  color: #979797;
 }
 
 .calpg-week-day-events .friend-rsvp-text,
