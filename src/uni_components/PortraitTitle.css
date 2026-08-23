@@ -2,8 +2,8 @@
    line. Overflows: infinite right-to-left ticker (duplicated copy, track
    translates -50%) — same technique as ClubMediaModule's .cm-poster-text. */
 .cal-portrait-title-wrap {
-  width: 75%;
-  max-width: 75%;
+  width: 92%;
+  max-width: 92%;
   margin: 0 auto;
   overflow: hidden;
 }

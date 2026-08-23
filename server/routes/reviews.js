@@ -114,6 +114,12 @@ router.post('/', checkMuted, async (req, res) => {
         .single();
 
     if (error) {
+        // Postgres unique_violation (23505) on reviews_one_per_user — surfaced as a real
+        // 409 rather than the generic 502 below, which is what the frontend's own
+        // `err.status === 409` branch (ReviewPage.jsx) has been waiting on all along.
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'Sorry, only one review per user' });
+        }
         const err = new Error(error.message);
         err.status = 502;
         throw err;

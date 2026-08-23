@@ -5,16 +5,54 @@ import { checkMuted } from '../middleware/checkMuted.js';
 import textModerator from '../lib/textModerator.js';
 import { getBlockedIds, filterBlocked } from '../lib/blocks.js';
 import { NotificationService } from '../notifications/service.js';
+import { weeklyWindow } from '../lib/wallClock.js';
 
 const router = express.Router();
 
 router.use(requireAuth);
 
-// GET /api/events/weekly  — events for clubs the current user has favorited.
-// Uses the existing get_weekly_events Postgres function.
+// GET /api/events/weekly  — upcoming events for the clubs the current user is a
+// member of. (It has never been "favorited", despite what the old comment here
+// said — get_weekly_events read member_list.)
+//
+// This used to call that function directly. It doesn't any more, because its
+// window was wrong: it compared the naive `timestamp` columns against `now()`,
+// which Postgres resolves using the session TimeZone (UTC), while the app
+// stores and displays those columns as local wall clock. Events therefore
+// disappeared from the week four hours before they ended, and on 2026-08-23 at
+// 12:52 EDT the function returned nothing at all while two events that had not
+// yet started sat inside the window.
+//
+// The window is built here instead (server/lib/wallClock.js), in the same
+// wall-clock space the column is stored in. supabase/migrations/013 carries the
+// equivalent fix for the function itself; once that's applied this can go back
+// to a single .rpc() call, and should — this shape exists to keep the response
+// identical, not because the join belongs in JS.
 router.get('/weekly', async (req, res) => {
-    const { data, error } = await supabaseAdmin
-        .rpc('get_weekly_events', { p_user_id: req.user.id });
+    const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('member_list')
+        .eq('id', req.user.id)
+        .maybeSingle();
+
+    if (profileError) {
+        const err = new Error(profileError.message);
+        err.status = 502;
+        throw err;
+    }
+
+    const clubIds = profile?.member_list || [];
+    if (clubIds.length === 0) return res.json([]);
+
+    const { from, to } = weeklyWindow();
+
+    const { data: events, error } = await supabaseAdmin
+        .from('club_events')
+        .select('id, id_of_club, club_name, event_name, event_description, start_time, end_time, event_image_url')
+        .in('id_of_club', clubIds)
+        .gte('end_time', from)
+        .lt('start_time', to)
+        .order('start_time');
 
     if (error) {
         const err = new Error(error.message);
@@ -22,7 +60,33 @@ router.get('/weekly', async (req, res) => {
         throw err;
     }
 
-    res.json(data);
+    if (events.length === 0) return res.json([]);
+
+    // The club-image fallback the SQL got from its join. Fetched separately
+    // rather than as an embedded select: demo_club_data is related to
+    // club_events by a plain uuid column, not a declared foreign key, so
+    // PostgREST has no relationship to embed through.
+    const { data: clubs } = await supabaseAdmin
+        .from('demo_club_data')
+        .select('id, image_url')
+        .in('id', [...new Set(events.map((e) => e.id_of_club))]);
+
+    const clubImage = new Map((clubs || []).map((c) => [c.id, c.image_url]));
+
+    // Same column list the function returned, including club_id aliasing
+    // id_of_club and image_url being the COALESCE of the two poster sources —
+    // every frontend consumer reads those names.
+    res.json(events.map((e) => ({
+        id: e.id,
+        id_of_club: e.id_of_club,
+        club_id: e.id_of_club,
+        club_name: e.club_name,
+        event_name: e.event_name,
+        event_description: e.event_description,
+        start_time: e.start_time,
+        end_time: e.end_time,
+        image_url: e.event_image_url || clubImage.get(e.id_of_club) || null,
+    })));
 });
 
 // GET /api/events/rsvps?eventIds=a,b,c

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './ThanksPage.css';
 
-export default function ThanksPage({ username, clubName, clubImage, thanksImage, onClose }) {
+export default function ThanksPage({ username, clubName, clubImage, thanksImage }) {
     const fullText = `Thanks for sharing, ${username}!`;
     const [displayedText, setDisplayedText] = useState("");
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -53,10 +53,6 @@ export default function ThanksPage({ username, clubName, clubImage, thanksImage,
                             Feedback on {clubName || 'club'}
                         </p>
                     </div>
-                    
-                    <button className="thanks-return-btn" onClick={onClose}>
-                        <span>Return to clubs</span>
-                    </button>
                 </div>
             </div>
         </div>

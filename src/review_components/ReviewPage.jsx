@@ -1,4 +1,3 @@
-import { supabase } from '../lib/supabase';
 import { apiFetch } from '../lib/api';
 import { uploadImage } from '../lib/uploadImage';
 import { useState, useEffect } from 'react';
@@ -16,14 +15,16 @@ import { useDocumentTitle } from '../lib/useDocumentTitle';
 export default function ReviewPage({clubId, onClose}) {
 
     const GlobalValue = useGlobalStore((state) => state.GlobalValue);
-    const { allData } = useClubData();
+    const { allData, profile } = useClubData();
     const id = clubId;
     const [warning, setWarning] = useState("")
     const [user_review, set_user_review] = useState('');
     const [user_title, set_user_title] = useState('');
     const [club, setClub] = useState(null);
     useDocumentTitle(club?.club_name ? `Backyard | Review ${club.club_name}` : null);
-    const [username, setUsername] = useState("");
+    // First name only, never last name — falls back to username when there's no name
+    // on file at all (never the account email, which isn't fit to show on-screen).
+    const displayName = profile?.first_name || profile?.username || 'User';
     const [reviewPosted, setReviewPosted] = useState(false);
     const [sectionVisible, setSectionVisible] = useState(false);
 
@@ -109,10 +110,7 @@ export default function ReviewPage({clubId, onClose}) {
     };
 
     useEffect(() => {
-        async function fetchClub() {
-            const { data: { user } } = await supabase.auth.getUser();
-            setUsername(user?.user_metadata?.full_name || user?.email || "User");
-
+        function fetchClub() {
             // No GET /api/clubs/:id endpoint — pull from the already-loaded ClubDataProvider
             // cache instead of round-tripping. If allData is empty (provider still loading),
             // the second effect run will pick it up.
@@ -173,7 +171,7 @@ export default function ReviewPage({clubId, onClose}) {
         } catch (err) {
             console.error('Error posting review:', err);
             if (err.status === 409) {
-                setWarning("You've already posted a review for this club.");
+                setWarning('Sorry, only one review per user');
             } else {
                 setWarning(err.message || 'Failed to post review');
             }
@@ -230,11 +228,10 @@ export default function ReviewPage({clubId, onClose}) {
             ) : (
                 /* Thanks Section - Takes full page */
                 <ThanksPage
-                    username={username}
+                    username={displayName}
                     clubName={club?.club_name}
                     clubImage={club?.image_url}
                     thanksImage={thanksImage}
-                    onClose={handleClose}
                 />
             )}
         </div>

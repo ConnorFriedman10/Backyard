@@ -176,10 +176,20 @@
 }
 
 .friend-rsvp-callout {
-  font-size: 12px;
-  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 2px 0 0;
-  font-style: italic;
+}
+
+.friend-rsvp-avatars {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.friend-rsvp-text {
+  color: #000000;
 }
 
 /* ===== EDIT SECTION ===== */
@@ -350,7 +360,7 @@
 
 @media (max-width: 500px) {
   .cal-module {
-    padding-left: 0.3rem;
+    padding-left: 0.5rem;
   }
 }
 

@@ -308,13 +308,13 @@
   .content-col {
 
     width: 100%;
-    padding: 0.3rem 0.35rem;
+    padding: 0.3rem 0.5rem;
     display: flex;
     flex-direction: column;
     align-items: stretch;
   }
     .about-section {
-    padding-left: 0.3rem;
+    padding-left: 0.5rem;
   }
   .friend-avatar-img-bio {
   width: 1.8rem;
@@ -936,7 +936,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
-  padding-left: var(--mod-pad, 0.3rem); /* lines up with the rectangle's left edge */
+  padding-left: 0.5rem; /* lines up with the rectangle's left edge */
   box-sizing: border-box;
 }
 
