@@ -140,7 +140,9 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
     // club events (for the calendar module)
     const [clubEvents, setClubEvents] = useState(() => warmed?.events ?? []);
     const [clubMyRsvpSet, setClubMyRsvpSet] = useState(new Set());
+    const [clubMyMaybeSet, setClubMyMaybeSet] = useState(new Set());
     const [clubFriendRsvpMap, setClubFriendRsvpMap] = useState(new Map());
+    const [clubAllAttendeesMap, setClubAllAttendeesMap] = useState(new Map());
     // club members (for comments module authorized/unauthorized tabs)
     const [clubMembers, setClubMembers] = useState(() => warmed?.members ?? []);
     // pending hide/show changes for comments — keyed by reviewId, only committed on Save
@@ -282,19 +284,44 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
                     try {
                         const eventIds = eventsData.map((e) => e.id);
                         const rsvpData = await apiFetch(`/clubs/${id}/events/rsvps?eventIds=${eventIds.join(',')}`);
+
                         setClubMyRsvpSet(new Set(
-                            rsvpData.filter((r) => r.user_id === authUser.id).map((r) => r.event_id)
+                            rsvpData.filter((r) => r.user_id === authUser.id && r.status === 'going').map((r) => r.event_id)
                         ));
+                        setClubMyMaybeSet(new Set(
+                            rsvpData.filter((r) => r.user_id === authUser.id && r.status === 'maybe').map((r) => r.event_id)
+                        ));
+
                         const friendIdSet = new Set((friendsArray || []).map((f) => f.id));
                         const friendProfileMap = new Map((friendsArray || []).map((f) => [f.id, f]));
                         const newFriendRsvpMap = new Map();
+                        const newAllAttendeesMap = new Map();
+
                         for (const rsvp of rsvpData) {
-                            if (friendIdSet.has(rsvp.user_id)) {
+                            // friend callout (going only, matches existing behaviour)
+                            if (friendIdSet.has(rsvp.user_id) && rsvp.status === 'going') {
                                 if (!newFriendRsvpMap.has(rsvp.event_id)) newFriendRsvpMap.set(rsvp.event_id, []);
                                 newFriendRsvpMap.get(rsvp.event_id).push(friendProfileMap.get(rsvp.user_id));
                             }
+                            // full attendees map for overlay
+                            if (!newAllAttendeesMap.has(rsvp.event_id)) {
+                                newAllAttendeesMap.set(rsvp.event_id, { going: [], maybe: [] });
+                            }
+                            const bucket = rsvp.status === 'maybe' ? 'maybe' : 'going';
+                            newAllAttendeesMap.get(rsvp.event_id)[bucket].push({
+                                user_id: rsvp.user_id,
+                                profile: rsvp.profile,
+                                isFriend: friendIdSet.has(rsvp.user_id),
+                            });
                         }
+                        // friends first within each bucket
+                        for (const { going, maybe } of newAllAttendeesMap.values()) {
+                            going.sort((a, b) => b.isFriend - a.isFriend);
+                            maybe.sort((a, b) => b.isFriend - a.isFriend);
+                        }
+
                         setClubFriendRsvpMap(newFriendRsvpMap);
+                        setClubAllAttendeesMap(newAllAttendeesMap);
                     } catch (err) {
                         console.error('Failed to fetch club RSVPs:', err);
                     }
@@ -397,9 +424,26 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
             } else {
                 await apiFetch(`/clubs/${id}/events/${eventId}/rsvp`, { method: 'POST' });
                 setClubMyRsvpSet((prev) => new Set([...prev, eventId]));
+                setClubMyMaybeSet((prev) => { const next = new Set(prev); next.delete(eventId); return next; });
             }
         } catch (err) {
             console.error('RSVP failed:', err);
+        }
+    };
+
+    const handleClubMaybe = async (eventId, isCurrentlyMaybe) => {
+        if (!user) return;
+        try {
+            if (isCurrentlyMaybe) {
+                await apiFetch(`/clubs/${id}/events/${eventId}/maybe`, { method: 'DELETE' });
+                setClubMyMaybeSet((prev) => { const next = new Set(prev); next.delete(eventId); return next; });
+            } else {
+                await apiFetch(`/clubs/${id}/events/${eventId}/maybe`, { method: 'POST' });
+                setClubMyMaybeSet((prev) => new Set([...prev, eventId]));
+                setClubMyRsvpSet((prev) => { const next = new Set(prev); next.delete(eventId); return next; });
+            }
+        } catch (err) {
+            console.error('Maybe failed:', err);
         }
     };
 
@@ -936,8 +980,11 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
                         editing={false}
                         events={clubEvents}
                         myRsvpSet={clubMyRsvpSet}
+                        myMaybeSet={clubMyMaybeSet}
                         friendRsvpMap={clubFriendRsvpMap}
+                        allAttendeesMap={clubAllAttendeesMap}
                         onRsvp={handleClubRsvp}
+                        onMaybe={handleClubMaybe}
                         userId={user?.id ?? null}
                     />
                 )}
@@ -954,8 +1001,11 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
                     onEditEvent={handleEditEvent}
                     onDeleteEvent={handleDeleteEvent}
                     myRsvpSet={clubMyRsvpSet}
+                    myMaybeSet={clubMyMaybeSet}
                     friendRsvpMap={clubFriendRsvpMap}
+                    allAttendeesMap={clubAllAttendeesMap}
                     onRsvp={handleClubRsvp}
+                    onMaybe={handleClubMaybe}
                     userId={user?.id ?? null}
                 />
                 {isApproved && (
