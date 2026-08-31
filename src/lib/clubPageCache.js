@@ -31,10 +31,9 @@ function isFresh(entry) {
 async function load(clubId) {
   // allSettled, not all: a club with no page row or no reviews must still open. The
   // component already handles each field being absent.
-  const [reviews, page, topTags, events, members, approved] = await Promise.allSettled([
+  const [reviews, page, events, members, approved] = await Promise.allSettled([
     apiFetch(`/clubs/${clubId}/reviews`),
     apiFetch(`/clubs/${clubId}/page`, { auth: false }),
-    apiFetch(`/clubs/${clubId}/top-tags`, { auth: false }),
     apiFetch(`/clubs/${clubId}/events/upcoming`),
     apiFetch(`/clubs/${clubId}/members`),
     // 401s for signed-out visitors; allSettled turns that into a rejection we ignore,
@@ -45,7 +44,6 @@ async function load(clubId) {
   return {
     reviews: reviews.status === 'fulfilled' ? reviews.value : undefined,
     page: page.status === 'fulfilled' ? page.value : undefined,
-    topTags: topTags.status === 'fulfilled' ? topTags.value : undefined,
     events: events.status === 'fulfilled' ? events.value : undefined,
     members: members.status === 'fulfilled' ? members.value : undefined,
     role: approved.status === 'fulfilled' ? (approved.value?.role ?? null) : undefined,

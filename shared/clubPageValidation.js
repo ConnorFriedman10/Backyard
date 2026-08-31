@@ -131,6 +131,7 @@ export const isValidLinkUrl = (value) => normalizeUrl(value) !== null;
 // shared/onboardingDraft.js. Without this split the wizard 400s on the first keystroke
 // of every step.
 export function validateBasicInfo(data, { partial = false } = {}) {
+    console.log(data);
     if (!partial && !data?.club_name?.trim()) return 'Club name cannot be empty.';
     if ((data?.club_name ?? '').trim().length > LIMITS.CLUB_NAME_MAX) return 'Club name must be 80 characters or fewer.';
     if (!partial && !data?.description?.trim()) return 'Description cannot be empty.';
