@@ -1,8 +1,17 @@
+/* z-index 600 — above the club grid/card stacking (ClubGrid.css tops out at 100, the
+   search bar's category dropdown at 500), so the nav bar stays visible over the club
+   list. But below the ExpandedTile overlay range (8000-8500 across ExpandedTile.css/
+   BasicInfoModule.css/CalendarModule.css for a club's expanded page and its own
+   sub-layers), so an open/expanding club card covers it — and further below the
+   friends-modal (10000) and other page-covering modals (crop/login/support at
+   9000-10101), which should still be able to cover it too. */
 .nav-bar {
   position: fixed;
   display: flex;
   gap: 50px;
-  z-index: 30;
+  z-index: 600;
+  padding: 12px 0px;
+  border-radius: 8px;
 }
 
 .nav-bar-btn {
@@ -27,12 +36,34 @@
   object-fit: cover;
 }
 
+.nav-bar-profile-btn.inactive img {
+  filter: sepia(100%);
+}
+
+/* Profile page only — matches the page's own background so the bar reads as part of
+   it instead of a floating overlay on the default page background elsewhere. */
+.nav-bar--profile-bg {
+  background: #f9f9f9;
+  padding: 12px 2px;
+  border-left: 1px solid gray;
+  border-right: 1px solid gray;
+  border-top: 1px solid gray;
+}
+
 @media (max-width: 500px) {
   .nav-bar {
     flex-direction: row;
-    bottom: 1%;
+    /* Hardcoded, not fit-content: 3 icons (44px) + 2 gaps (50px) + 0 horizontal
+       padding = 232px. */
+    width: 232px;
+    bottom: -1%;
     left: 50%;
     transform: translateX(-50%);
+  }
+
+  .nav-bar-btn img {
+    width: 44px;
+    height: 44px;
   }
 }
 

@@ -241,6 +241,16 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
 
   const selectedCat = taxonomy.find(c => c.id === clubInterests?.category_id) || null;
 
+  // Rendered twice (once under the name for web, once in the rectangle for mobile,
+  // same pattern as club-tag1--inline/--block below) — only one shows per breakpoint.
+  const interestsTagline = selectedCat && [
+    selectedCat.name,
+    ...(clubInterests.subcategory_ids || []).map(subId => {
+      const sub = selectedCat.subcategories?.find(s => s.id === subId);
+      return sub?.name;
+    }).filter(Boolean)
+  ].join(' · ');
+
   const getSuggestions = useCallback((index) => {
     if (!selectedCat) return { matches: [], showAdd: false };
     const subs = selectedCat.subcategories || [];
@@ -351,14 +361,8 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
               </div>
           }
           {!editing && selectedCat && (
-            <p className="club-interests-tagline">
-              {[
-                selectedCat.name,
-                ...(clubInterests.subcategory_ids || []).map(subId => {
-                  const sub = selectedCat.subcategories?.find(s => s.id === subId);
-                  return sub?.name;
-                }).filter(Boolean)
-              ].join(' · ')}
+            <p className="club-interests-tagline club-interests-tagline--inline">
+              {interestsTagline}
             </p>
           )}
           {editing && (
@@ -433,6 +437,11 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
 
         <div className="image-stack">
           <div className="rectangle_min" style={{ '--dominant-color': dominantColor }}>
+            {!editing && selectedCat && (
+              <p className="club-interests-tagline club-interests-tagline--block">
+                {interestsTagline}
+              </p>
+            )}
             <div
               className="club-img-exp"
               style={{ backgroundImage: `url(${logoPreview || logoUrl})`, marginTop: '1rem' }}
@@ -499,7 +508,7 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
         {editing && (
           <p className="about-edit-help">
             {part === 'about'
-              ? 'Share a description telling users about your club.'
+              ? 'Think of this like your bio. Also if you want to hide your memmbers, hide this section.'
               : "This is your club's basic info section. Feel free to edit your club's name, profile photo, and a description telling users about your club."}
           </p>
         )}
@@ -516,9 +525,6 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
                   username={friend.username}
                 />
               ))}
-              {friendsInClub.length > 3 && (
-                <span className="friend-avatar-overflow">+{friendsInClub.length - 3}</span>
-              )}
               <span className="friend-names-text">
                 {friendsInClub.length === 1
                 ? (

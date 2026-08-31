@@ -18,10 +18,12 @@ import AdminPage from './admin_components/AdminPage';
 import { ClubDataProvider } from './context/ClubDataProvider'
 import { SupportModal } from './support_components/SupportModal'
 import { DEFAULT_UNIVERSITY_PATH } from './lib/university'
+import { useGlobalStore } from './lib/store'
 
 function App() {
   const [loginOpen, setLoginOpen] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(false);
+  const supportOpen = useGlobalStore((state) => state.supportOpen);
+  const setSupportOpen = useGlobalStore((state) => state.setSupportOpen);
   const location = useLocation();
 
   useEffect(() => {

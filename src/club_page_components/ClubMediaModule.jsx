@@ -130,7 +130,7 @@ function ClubMediaModule({ data, editing, onChange, warning }) {
       {editing && (localWarning || warning) && <p className="module-warning">{localWarning || warning}</p>}
       {editing && (
           <p className="about-edit-help">
-            Think of these like your highlights. When user's click on your highlights, they will see a scrap book where you will take them into the world of your club.
+            Think of these like your highlights. When user's click on your highlights, they will see a scrap book where you can tell them a story.
           </p>
         )}
       <div className="club-media-row">
@@ -277,7 +277,7 @@ function PosterCard({ poster, editing, rank, count, onOpen, isPosterOpen, onUpda
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             aria-label="Delete poster"
           >
-            X
+            x
           </button>
         )}
 

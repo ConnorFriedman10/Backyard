@@ -1,12 +1,27 @@
+/* Column count is driven purely by how many cards fit at the current density's
+   min width, not by viewport breakpoints — see --card-min-width/--card-max-width
+   below. Every track is capped at 1fr, never a fixed px max: that's what keeps the
+   row always filling the list exactly (edge to edge, gap always exactly what's
+   specified below) regardless of how the min-width divides into the available
+   width — a fixed max on the *track* left whatever space the columns couldn't
+   absorb to be dumped into the gaps (or, at some widths, into overflow) instead.
+   The per-size max width is instead applied to .club-card itself (ClubGrid.css),
+   which just centers within its cell once it hits that cap. */
 .clubs-list {
+  --card-min-width: 300px; /* medium */
+  --card-max-width: 360px; /* medium */
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--card-min-width)), 1fr));
   gap: 30px;
   min-width: 10px;
-  width: var(--uni-content-width, 75%);
+  width: 100%;
+  /* Max width, not a fixed width — capped to 98% of .uni-search-shell (same
+     --uni-content-width var both read), so the list never renders wider than the
+     search bar above it as it scrolls underneath. */
+  max-width: calc(var(--uni-content-width, 75%) * 0.98);
   margin: 0% auto 0 auto;
-  
-  justify-content:center;
+
+  justify-content: center;
   justify-items: center;
   z-index: 0;
 
@@ -16,61 +31,26 @@ body::-webkit-scrollbar {
   display: none; /* Hides the scrollbar */
 }
 
-@media (min-width: 650px) {
-  .clubs-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1100px) {
-  .clubs-list {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* Ultra-Wide: 4 Cards starting at 2000px */
-@media (min-width: 2000px) {
-  .clubs-list {
-    grid-template-columns: repeat(4, 1fr);
-    max-width: 2400px; /* Optional cap so it doesn't get infinite */
-  }
-}
-
 @media (max-width: 649px) {
   .clubs-list {
-
     gap: 24px;
   }
 }
 
 /* ── Card density ──────────────────────────────────────────────────────────────
-   Layered on top of the breakpoints above rather than replacing them, so
-   [data-size="medium"] renders exactly as this grid did before the control
-   existed. --card-scale is consumed by ClubGrid.css to size the card and its
-   image; the column counts below keep the row from going sparse or cramped as
-   the cards resize. */
+   [data-size] only changes --card-min-width/--card-max-width; the auto-fill grid
+   above figures out how many columns fit on its own, at every viewport width
+   (including <500px, where the toggle stays available — see UniSearchBar.css).
+   --card-max-width is read by .club-card itself (ClubGrid.css), not by the grid
+   track. Small's max is medium's min minus 1px, so the two sizes' ranges never
+   overlap (small: 150-299px, medium: 300-360px). */
+.clubs-list[data-size="small"] { --card-min-width: 150px; --card-max-width: 299px; }
 
-.clubs-list {
-  --card-scale: 1;
+/* Above phone width, 150px cards read as too cramped once there's room to just show
+   fewer, more legible ones instead — raise the floor small's grid track can shrink
+   to (rather than constraining .club-card itself, which would fight the track and
+   overlap, as it did before). Below 700px, small still goes as low as 150px so a
+   phone screen isn't forced into an oversized single column. */
+@media (min-width: 700px) {
+  .clubs-list[data-size="small"] { --card-min-width: 250px; }
 }
-
-.clubs-list[data-size="small"] { --card-scale: 0.68; }
-.clubs-list[data-size="large"] { --card-scale: 1.45; }
-
-@media (min-width: 650px) and (max-width: 1099px) {
-  .clubs-list[data-size="small"] { grid-template-columns: repeat(3, 1fr); }
-  .clubs-list[data-size="large"] { grid-template-columns: repeat(1, 1fr); }
-}
-
-@media (min-width: 1100px) and (max-width: 1999px) {
-  .clubs-list[data-size="small"] { grid-template-columns: repeat(5, 1fr); }
-  .clubs-list[data-size="large"] { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (min-width: 2000px) {
-  .clubs-list[data-size="small"] { grid-template-columns: repeat(6, 1fr); }
-  .clubs-list[data-size="large"] { grid-template-columns: repeat(3, 1fr); }
-}
-
-/* Below 650px the grid is a single column and the card is width-based rather
-   than vw-based, so density would have nothing to act on. Left alone. */

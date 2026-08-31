@@ -84,10 +84,15 @@ form {
     opacity: 1;
 }
 
-form button:not(.toggle-auth-btn):not(.need-help-btn):not(.auth-submit-btn):not(.reset-submit-btn):not(.manage-roles-panel__add-btn) {
-    width: 70vh;
+/* width was a bare 70vh — unlike every other width in this file (.bordered-input-wrap,
+   .name-row, .google-btn-wrap all use min(70vh, 88vw)) it had no viewport-width cap, so
+   on a narrow/tall screen it could exceed the actual viewport width and overflow. Also
+   growing list of :not() exclusions: this rule is meant for wide, auth-flow-style submit
+   buttons, but by default it silently grabs *any* button inside *any* form — including
+   small utility buttons (scale/remove/duo-btn) that were never meant to be full-width. */
+form button:not(.toggle-auth-btn):not(.need-help-btn):not(.auth-submit-btn):not(.reset-submit-btn):not(.manage-roles-panel__add-btn):not(.duo-btn):not(.settings-save):not(.settings-secondary):not(.settings-danger-btn):not(.settings-danger-trigger):not(.settings-unblock):not(.cal-image-scale-btn):not(.settings-photo-remove):not(.setup-photo-remove) {
+    width: min(70vh, 88vw);
     padding: 14px 12px;
-    border: 3px solid rgb(46, 120, 139);
     border-radius: 8px;
     box-sizing: border-box;
     justify-self: center;

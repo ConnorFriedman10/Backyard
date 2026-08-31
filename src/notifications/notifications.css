@@ -46,8 +46,11 @@
   right: 0;
   width: 420px;
   height: 100vh;
-  background: #1a4d2e;
+  background-color: #ffffff;
+  background-image: url('/src/assets/white-paper-texture.jpg');
+  filter: brightness(1.28) contrast(0.98);
   color: #cfd2e5;
+  font-family: 'Barlow Condensed', sans-serif;
   z-index: 10101;
   overflow-y: auto;
   display: flex;
@@ -62,30 +65,34 @@
   }
 }
 
-/* Panel header */
+/* Panel header — matches SettingsPage's .settings-heading typography. */
 .notif-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.25rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background-image: url('/src/assets/border-horizontal-gray.svg');
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  background-size: auto 2px;
   position: sticky;
   top: 0;
-  background: #1a4d2e;
   z-index: 1;
 }
 
 .notif-panel-header h2 {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #cfd2e5;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(2.8rem, 7vw, 4rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #494949;
 }
 
 .notif-panel-close {
   background: none;
   border: none;
-  color: #cfd2e5;
+  color: #494949;
   font-size: 1.6rem;
   cursor: pointer;
   line-height: 1;
@@ -103,11 +110,14 @@
 }
 
 .notif-section-title {
-  font-size: 0.7rem;
-  font-weight: 700;
+  width: 100%;
+  text-align: left;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(207, 210, 229, 0.45);
+  color: #29241d;
+  letter-spacing: 0.04em;
   padding: 0.5rem 1.25rem 0.35rem;
 }
 
@@ -145,12 +155,12 @@
   margin: 0 0 0.2rem;
   font-size: 0.88rem;
   line-height: 1.45;
-  color: #cfd2e5;
+  color: #000;
 }
 
 .notif-time {
   font-size: 0.74rem;
-  color: rgba(207, 210, 229, 0.5);
+  color: #000;
 }
 
 /* Inline actions */
@@ -181,7 +191,7 @@
 
 .notif-action-btn--decline {
   background: rgba(255, 255, 255, 0.1);
-  color: #cfd2e5;
+  color: #000;
 }
 
 .notif-action-btn--decline:hover {

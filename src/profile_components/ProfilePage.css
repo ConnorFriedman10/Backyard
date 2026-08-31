@@ -14,16 +14,55 @@
   margin: 0 auto;
   padding: 0 20px;
   box-sizing: border-box;
-  
+
+  /* Four deliberate steps, not ad hoc numbers — every vertical gap on this page is one
+     of these, so the rhythm reads as one consistent scale top to bottom rather than each
+     gap being whatever felt right locally (Apple's "Craft": nothing is random, every
+     spacing value is a choice you can defend).
+
+     --gap-xs:      two things so closely related they read as one unit
+                    (avatar → its status text, name → the bio under it).
+     --gap-tight:   the header's own action row — still the same cluster as the header,
+                    not a new section, so it stays close on both sides of its divider.
+     --gap-header:  a section's own heading down to its content (mirrors the ~15px this
+                    page's shared .divider-header already used elsewhere, rounded to the
+                    scale) — also reused as the page's top clearance above the header.
+     --gap-section: what separates one section from the next (Photos → Clubs →
+                    Friends) — no longer the largest step (set intentionally tighter
+                    than --gap-header), so read this as "its own deliberate value,"
+                    not "biggest wins." */
+  --profile-gap-xs: 8px;
+  --profile-gap-tight: 12px;
+  --profile-gap-header: 16px;
+  --profile-gap-section: 10px;
+
+  /* Name → bio only — deliberately its own token, not --profile-gap-xs reused, because
+     this one scales with viewport instead of sitting at one fixed size (clamp, same
+     idea as .ProfileName's and .user-description's own font-size clamps just above/
+     below it) and lands around 5px at a typical width rather than a flat 8px. */
+  --profile-gap-name: clamp(2px, 0.6vw, 6px);
+
+  /* .profile-image lives in .avatar-upload-wrap, a sibling of .profile-copy — a variable
+     declared on .profile-copy itself wouldn't inherit across to it, so this sits here on
+     the shared ancestor instead (same scope as every --profile-gap-* token above).
+     Fluid, not a single breakpoint jump — same clamp() approach as .ProfileName's and
+     .user-description's font-sizes right next to it, so the avatar shrinks in step with
+     the text beside it instead of snapping at one fixed width. 20vw crosses from the
+     100px floor to the 150px ceiling between 500px and 750px viewport width. */
+  --profile-avatar-size: clamp(100px, 20vw, 150px);
 }
 
+/* Top padding doubles as the page's top clearance — there's nothing above this but the
+   viewport edge, so it reuses --profile-gap-header rather than a page-specific one-off.
+   Bottom padding is --profile-gap-tight: the gap from here to the divider below is the
+   same tight cluster as the button row on the divider's other side. */
 .profile-header {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 24px;
   width: 100%;
-  padding: 16px 0 12px;
+  padding: var(--profile-gap-header) 0 var(--profile-gap-tight);
 }
 
 .avatar-upload-wrap {
@@ -31,7 +70,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--profile-gap-xs);
 }
 
 .profile-photo-btn {
@@ -81,8 +120,8 @@
 }
 
 .profile-image {
-  width: 150px;
-  height: 150px;
+  width: var(--profile-avatar-size);
+  height: var(--profile-avatar-size);
   border-radius: 50%;
   object-fit: cover;
   display: block;
@@ -102,9 +141,10 @@
 }
 
 .ProfileName {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: "Oswald", sans-serif;
   font-size: clamp(2.8rem, 8vw, 5rem);
   font-weight: 400;
+  line-height: 0.85;
   margin: 0;
   color: #494949;
   letter-spacing: 0.04em;
@@ -115,24 +155,50 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--profile-gap-name);
 }
 
+/* Font-size tracks a quarter of .ProfileName's clamp (2.8rem/4, 8vw/4, 5rem/4) so the
+   description reads as a quarter the weight of the name above it — floored at 15px so
+   it never gets small enough to hurt legibility on narrow screens. */
 .user-description {
   margin: 0;
   max-width: 40ch;
-  font-family: Barlow, sans-serif;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: clamp(15px, 2vw, 1.25rem);
+  line-height: 1;
   color: #5c5c5c;
-  line-height: 1.35;
 }
 
-/* Mirrors .exp-action-row: centered when it fits, scrolls horizontally on overflow */
+/* Mirrors .exp-action-row: centered when it fits, scrolls horizontally on overflow.
+   No margin-top of its own — padding is the only vertical spacing this row adds, so its
+   gap from the dividers above and below is exactly what that padding says, nothing more.
+
+   Equal top/bottom padding here would NOT look symmetric, though — every button is a
+   .duo-btn (index.css), which draws two things below its own border box that plain CSS
+   padding doesn't know about:
+     - `.duo-btn-pill`, the sibling "3D press" shadow layer, inset top:1px/bottom:0.5px
+       then `transform: translate(0, 9px)` — its rendered bottom edge ends up ~8.5px
+       below the button's own bottom edge.
+     - `box-shadow: 0 7px 0` on the button itself, a flat 7px drop with no blur/spread.
+   Both are behind/around the button, not counted in its box, and together they push the
+   button's *visual* bottom edge about 9px lower than its *layout* bottom edge — nothing
+   pushes the top edge anywhere. So equal padding-top/padding-bottom leaves ~9px less
+   visible whitespace under the buttons than above them. --profile-btn-visual-depth
+   corrects for exactly that gap, so the two blank spaces either side of the row actually
+   read as the same size, not just measure the same in devtools.
+
+   overflow-x: auto is needed so the row scrolls horizontally instead of wrapping, but it
+   has a side effect: a CSS rule where setting one axis to non-"visible" forces the other
+   to compute as "auto" instead of "visible" too — so overflow-y here still clips, and the
+   padding above and below has to be generous enough to fully contain the pill/shadow,
+   or it gets cut off at the row's own edge instead of spilling out past the buttons. */
 .profile-btn-row {
   width: 100%;
   box-sizing: border-box;
   position: relative;
-  margin-top: 8px;
-  padding: 10px 0;
+  --profile-btn-visual-depth: 9px;
+  padding: var(--profile-gap-tight) 0 calc(var(--profile-gap-tight) + var(--profile-btn-visual-depth));
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -146,19 +212,25 @@
   border-radius: 3px;
 }
 
+/* This class's own comment above (.profile-btn-row) already claimed to mirror
+   .exp-action-row's "centered when it fits, scrolls when it overflows" — but the
+   margin: 0 auto that actually does the centering (see .exp-action-row-inner,
+   ExpandedTile.css) was missing here, so the row sat left-aligned instead. */
 .profile-btn-row-inner {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   width: max-content;
+  margin: 0 auto;
 }
 
 .profile-btn-row-inner > * {
   flex: 0 0 auto;
 }
 
+/* No margin rule here — every use of this class also carries .duo-btn, which already
+   forces margin: 0 !important (index.css), so a local margin-top: 0 was dead weight. */
 .profile-setup-btn {
-  margin-top: 0;
   font-family: "Barlow Condensed", sans-serif;
   cursor: pointer;
 }
@@ -166,7 +238,8 @@
 .profile-duo-btn--interests,
 .profile-duo-btn--logout,
 .profile-duo-btn--notif,
-.profile-duo-btn--settings {
+.profile-duo-btn--settings,
+.profile-duo-btn--support {
   border: none !important;
   color: #fff !important;
 }
@@ -175,6 +248,16 @@
 .profile-duo-btn--logout    { background-color: #BC4A49 !important; }
 .profile-duo-btn--notif     { background-color: #4B8AB3 !important; }
 .profile-duo-btn--settings  { background-color: #1E1A18 !important; }
+/* Cream white, like the floating support trigger it replaces when signed in
+   (SupportModal.css .support-trigger) — dark text instead of white since the
+   background is light. Horizontal padding matches NotificationBell (14px) for
+   consistent visual weight with other icon buttons. */
+.profile-duo-btn--support   {
+  background-color: #f7f7f3 !important;
+  color: #494949 !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
 
 .profile-duo-btn--notif.duo-btn {
   width: auto !important;
@@ -212,16 +295,33 @@
   padding: 4px 6px;
 }
 
+/* No margin of its own — every gap around a divider comes from the element that sits
+   next to it (--profile-gap-tight or --profile-gap-section), so the divider is always
+   exactly where those two known quantities put it, not offset by its own extra space. */
 .profile-divider {
   width: 100%;
   border: none;
   border-top: 1px solid #ddd;
-  margin: 0 0 8px;
+  margin: 0;
 }
 
+/* margin-top is the gap after the divider above a section; margin-bottom is the gap
+   before the divider below it. Because dividers carry no margin of their own, these
+   two never stack with anything else — every section-to-divider gap on the page is
+   exactly --profile-gap-section, on both sides, consistently. */
 .profile-section {
   width: 100%;
+  margin-top: var(--profile-gap-section);
+  margin-bottom: var(--profile-gap-section);
+}
 
+/* Matches .membership-empty's tone (ClubMembershipPanel.css) for the same "nothing
+   here yet" role, just for the sections that don't already own their own empty state. */
+.profile-empty-hint {
+  margin: 0;
+  color: #888;
+  font-style: italic;
+  font-size: 0.95rem;
 }
 
 .profile-divider-header {
@@ -237,8 +337,12 @@
   margin: 0 0 12px;
 }
 
-.profile-divider-line {
-  height: 1px;
-  background-color: rgb(205, 205, 205);
-  margin-bottom: 20px;
+/* Scoped override of the shared .divider-header (ExpandedTile.css) used for this page's
+   "Your Photos"/"Clubs You've Joined"/"Friends" headings — its own margin-bottom (~15px)
+   is a one-off from wherever it was first tuned, not part of this page's scale. Rounded
+   to --profile-gap-header so a section's heading-to-content gap is the same deliberate
+   value everywhere on this page, without changing that class for the other pages
+   (club pages, reviews, member rosters) that also use it unscoped. */
+.ProfilePage .divider-header {
+  margin-bottom: var(--profile-gap-header);
 }

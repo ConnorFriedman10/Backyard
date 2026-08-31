@@ -9,6 +9,15 @@
     border: 1px solid rgb(202, 200, 200);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     z-index: 10;
+    transition: height 0.15s ease, border-radius 0.15s ease;
+}
+
+/* Above 500px these are invisible to layout — their children sit directly in
+   .club-input-wrapper's flex row exactly as before this grouping was introduced.
+   See the mobile redesign further down for what they become below 500px. */
+.usb-row-top,
+.usb-row-bottom {
+    display: contents;
 }
 
 .input-container {
@@ -64,11 +73,19 @@
   color: white;
 }
 
-/* The control is a convenience, not a necessity — drop it first when the row gets
-   tight so the search input keeps its width. */
+/* Column count is now controlled entirely by this toggle (ClubList.css has no
+   viewport-based column rules), so it has to stay reachable on phones too —
+   shrink it to make room instead of hiding it. */
 @media (max-width: 649px) {
   .uni-size-toggle {
-    display: none;
+    height: 1.8rem;
+    margin-left: 4px;
+  }
+
+  .uni-size-btn {
+    min-width: 1.6rem;
+    padding: 0 0.35rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -143,21 +160,24 @@
 .uni-hamburger-item:hover {
   background: #f2f2f2;
 }
-.club-input-wrapper input {
+.club-input-wrapper textarea {
     background-color: transparent ;
     border: none;
-     
+    resize: none;
+    margin: 0;
+    padding: 0;
     outline: none;
     font-family: "Barlow", sans-serif;
     width: 100%;
     height: 100%;
     font-size: clamp(1rem, 2vw, 1.25rem);
-    
+    line-height: 1.3;
+
     white-space: nowrap;
     overflow: hidden;
-    
+
     color: rgb(208, 81, 81);
-    
+
 
 }
 
@@ -188,4 +208,73 @@
 @keyframes blinks {
     0%, 100% { border-color: transparent; }
     50% { border-color: rgb(43, 37, 7); }
+}
+
+/* ── Mobile redesign (<=700px) ──────────────────────────────────────────────
+   Below this width there's no longer room for the search text, Categories, and
+   the size toggle on one line without crushing all three — so the bar wraps to
+   two rows instead: the search field on its own line up top, Categories + the
+   size toggle together underneath (bottom-right). The search field also
+   switches from a single-line input to a wrapping, auto-growing textarea (see
+   the ref-driven resize effect in UniSearchBar.jsx) so a long query grows the
+   bar downward — the same shape as Claude's own composer — rather than
+   silently clipping. Deliberately placed at the end of the file: it overrides
+   .club-input-wrapper textarea and .typewriter-placeholder above, and at equal
+   specificity the later rule wins regardless of the media query. */
+@media (max-width: 700px) {
+  .club-input-wrapper {
+    height: auto;
+    min-height: 6.2rem;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start;
+    padding: 10px 15px 8px;
+    row-gap: 10px;
+    border-radius: 15px;
+    margin-top: -6px;
+  }
+
+  .usb-row-top {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .usb-row-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .uni-size-toggle {
+    margin-left: 8px;
+  }
+
+  .hamburger-wrapper {
+    margin-left: 0;
+  }
+
+  .club-input-wrapper textarea {
+    /* Let the query wrap instead of hiding past the edge, and grow downward
+       (height is set inline, from scrollHeight, by the resize effect). Line
+       height matches the Categories/size-toggle row's own height (2rem, from
+       .uni-hamburger-btn/.uni-size-toggle) so a wrapped second line of text
+       lands on the same vertical rhythm as that row underneath it. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow: hidden;
+    line-height: 2rem;
+  }
+
+  /* Deliberately NOT wrapped, unlike the real textarea above: this is the
+     decorative pre-interaction typewriter animation, absolutely positioned and
+     not wired to the auto-resize effect (only the real textarea's value drives
+     that). If it wrapped, its later lines would grow with no container height
+     to match, since nothing measures or reacts to this element's size — it
+     would just misposition rather than push the bar open. It's also gone the
+     instant the user actually types, so there's nothing to keep on one line for. */
+  .typewriter-placeholder {
+    line-height: 2rem;
+  }
 }

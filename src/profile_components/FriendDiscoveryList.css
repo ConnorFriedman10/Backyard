@@ -141,8 +141,17 @@
   color: inherit;
 }
 
+/* Matches .friend-card-name so "Find More" reads at the same weight/size/position as
+   the friend names beside it, instead of the smaller muted label .find-friends-card
+   otherwise inherits. */
 .find-friends-label {
+  margin-top: 12px;
+  font-family: "Barlow", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
   text-align: center;
+  word-break: break-word;
 }
 
 /* ── Modal overlay ── */

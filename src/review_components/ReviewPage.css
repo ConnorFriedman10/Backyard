@@ -252,22 +252,6 @@
   }
 }
 
-.thanks-header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 3rem;
-  width: 100%;
-}
-
-
-
-.raccoon {
-  width: clamp(80px, 10vw, 120px);
-  height: clamp(80px, 10vw, 120px);
-  object-fit: contain;
-}
 
 .divider {
   width: 100%;

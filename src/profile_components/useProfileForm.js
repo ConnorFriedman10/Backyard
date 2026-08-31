@@ -164,6 +164,13 @@ export function useProfileForm() {
         setAvatarPreview(URL.createObjectURL(file));
     };
 
+    // Same assignment handleAvatarChange does, just from a File that already exists (a
+    // crop modal's output) instead of an <input> change event.
+    const replaceAvatarFile = (file) => {
+        setAvatarFile(file);
+        setAvatarPreview(URL.createObjectURL(file));
+    };
+
     const handlePhotoChange = (event) => {
         const files = Array.from(event.target.files || []);
         const remaining = MAX_PHOTOS - (existingPhotos.length + selectedPhotoFiles.length);
@@ -192,6 +199,26 @@ export function useProfileForm() {
         URL.revokeObjectURL(photoPreviews[index]);
         setSelectedPhotoFiles((prev) => prev.filter((_, i) => i !== index));
         setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    // `index` is over the combined existingPhotos + selectedPhotoFiles order the gallery
+    // renders in. An existing photo is a remote URL, not a File, so scaling one can't
+    // replace it in place — it comes out of existingPhotos and the cropped result goes in
+    // as a new pending file instead (which is why it jumps to the end of the grid).
+    const replacePhoto = (index, file) => {
+        if (index < existingPhotos.length) {
+            setExistingPhotos((prev) => prev.filter((_, i) => i !== index));
+            setSelectedPhotoFiles((prev) => [...prev, file]);
+            setPhotoPreviews((prev) => [...prev, URL.createObjectURL(file)]);
+            return;
+        }
+
+        const newIndex = index - existingPhotos.length;
+        setSelectedPhotoFiles((prev) => prev.map((f, i) => (i === newIndex ? file : f)));
+        setPhotoPreviews((prev) => {
+            URL.revokeObjectURL(prev[newIndex]);
+            return prev.map((p, i) => (i === newIndex ? URL.createObjectURL(file) : p));
+        });
     };
 
     // Every uploaded image goes through /storage/verify-image before its URL is saved,
@@ -337,9 +364,9 @@ export function useProfileForm() {
         usernameStatus,
         biography, setBiography,
         school,
-        avatarPreview, handleAvatarChange,
+        avatarFile, avatarPreview, handleAvatarChange, replaceAvatarFile,
         existingPhotos, photoPreviews,
-        handlePhotoChange, removeExistingPhoto, removeNewPhoto,
+        handlePhotoChange, removeExistingPhoto, removeNewPhoto, replacePhoto,
         totalPhotos: existingPhotos.length + selectedPhotoFiles.length,
         validate, save,
     };

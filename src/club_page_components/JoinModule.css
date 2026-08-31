@@ -326,6 +326,25 @@
   bottom: 0;
 }
 
+/* Safari-only (matches WebKit desktop + iOS, not Chrome/Firefox): the ink-line
+   SVG border doesn't render reliably here, so swap it for a plain 1px solid
+   border in the same color instead of trying to fix the SVG rendering. */
+@supports (-webkit-hyphens: none) {
+  .join-add-card-border,
+  .join-add-card-border-h-wrap {
+    display: none;
+  }
+  .join-add-card {
+    border: 1px solid #000;
+  }
+  /* .join-add-card:hover changes border-color to #d9d9d9 above — the SVG version
+     stays black in both states (see "visible in both normal and hover states"
+     comment above), so this plain-border stand-in needs the same override. */
+  .join-add-card:hover {
+    border-color: #000;
+  }
+}
+
 /* ---- Edit mode: link inputs ---- */
 
 .join-link-inputs {
@@ -390,6 +409,6 @@
 
 @media (max-width: 500px) {
   .join-module {
-    padding-left: 0.3rem;
+    padding-left: 0.5rem;
   }
 }

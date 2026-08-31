@@ -5,6 +5,10 @@ import './InterestsModal.css';
 const MAX_CATEGORIES = 3;
 const MAX_SUBCATEGORIES = 3;
 
+// Cycled by index across each category's subcategory list so adjacent pills
+// read as distinct chips rather than a uniform gray row.
+const SUB_COLORS = ['#FC7200', '#ffcc13', '#56758b'];
+
 export function InterestsModal({ onClose }) {
   const [taxonomy, setTaxonomy] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,7 +142,6 @@ export function InterestsModal({ onClose }) {
                       key={cat.id}
                       className={`interests-pill${isSelected ? ' interests-pill--selected' : ''}${!isSelected && atMax ? ' interests-pill--disabled' : ''}`}
                       onClick={() => toggleCategory(cat.id)}
-                      disabled={!isSelected && atMax}
                     >
                       {cat.name}
                     </button>
@@ -152,6 +155,10 @@ export function InterestsModal({ onClose }) {
                   {selectedCategoryObjects.map(cat => {
                     const currentSubs = selectedSubs.get(cat.id) || new Set();
                     const atSubMax = currentSubs.size >= MAX_SUBCATEGORIES;
+                    // One color per selected category (by selection order), shared by
+                    // all of its selected subcategory pills — not cycled per-subcategory,
+                    // so e.g. every selected "Greek Life" sub pill reads as the same blue.
+                    const categoryColor = SUB_COLORS[selectedCategoryIds.indexOf(cat.id) % SUB_COLORS.length];
                     return (
                       <div key={cat.id} className="interests-sub-section">
                         <div className="interests-sub-header">
@@ -169,6 +176,7 @@ export function InterestsModal({ onClose }) {
                                 className={`interests-pill interests-pill--sm${isSubSelected ? ' interests-pill--selected' : ''}${!isSubSelected && atSubMax ? ' interests-pill--disabled' : ''}`}
                                 onClick={() => toggleSub(cat.id, sub.id)}
                                 disabled={!isSubSelected && atSubMax}
+                                style={{ '--sub-color': categoryColor }}
                               >
                                 {sub.name}
                               </button>

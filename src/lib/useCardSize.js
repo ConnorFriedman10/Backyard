@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 // 'medium' is exactly the layout that existed before this control, so the default renders
 // pixel-identically to what it replaced.
 
-export const CARD_SIZES = ['small', 'medium', 'large'];
+export const CARD_SIZES = ['small', 'medium'];
 export const DEFAULT_CARD_SIZE = 'medium';
 
 const STORAGE_KEY = 'backyard.cardSize';

@@ -67,7 +67,6 @@ export const NotificationSettings = () => {
     if (loading) {
         return (
             <SkeletonRegion className="settings-section" label="Loading notification settings">
-                <h2 className="profile-divider-header">Notifications</h2>
                 <div className="settings-toggle-group">
                     <Skeleton width="260px" height="1.1rem" />
                     <Skeleton width="260px" height="1.1rem" />
@@ -78,8 +77,6 @@ export const NotificationSettings = () => {
 
     return (
         <section className="settings-section">
-            <h2 className="profile-divider-header">Notifications</h2>
-
             {prefs ? (
                 <div className="settings-toggle-group">
                     {CHANNELS.map(({ key, label, hint }) => (

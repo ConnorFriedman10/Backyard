@@ -11,6 +11,10 @@ const initialState = {
     friendMembershipMap: new Map(),
     friendsArray: [],
     clubTopTags: new Map(),
+    // The category/subcategory taxonomy (GET /interests), used to resolve the
+    // category_id/subcategory_ids merged onto each club into display names for the
+    // grid card's tagline, without every card fetching or scanning it itself.
+    taxonomy: [],
     // The signed-in user's own profile row. Fetched here rather than by each consumer:
     // it was previously requested independently by ProfilePage, LoginMorph,
     // CalendarModule, and three separate Settings sections, so simply opening Settings
@@ -57,12 +61,14 @@ export const ClubDataProvider = ({ children }) => {
         let newProfile = null;
         let newFriendMembershipMap = new Map();
         let newFriendsArray = [];
+        let newTaxonomy = [];
 
         // Tier 1: independent fetches fire together. allSettled keeps one failure
         // from killing the rest — matches the old per-fetch try/catch behavior.
-        const [clubsResult, userResult] = await Promise.allSettled([
+        const [clubsResult, userResult, taxonomyResult] = await Promise.allSettled([
             apiFetch('/clubs'),
             supabase.auth.getUser(),
+            apiFetch('/interests', { auth: false }),
         ]);
 
         if (clubsResult.status === 'fulfilled') {
@@ -70,6 +76,12 @@ export const ClubDataProvider = ({ children }) => {
             console.log("successful fetching from server");
         } else {
             console.error("Error fetching from server: " + clubsResult.reason);
+        }
+
+        if (taxonomyResult.status === 'fulfilled') {
+            newTaxonomy = taxonomyResult.value || [];
+        } else {
+            console.error("Error fetching taxonomy:", taxonomyResult.reason);
         }
 
         const userData = userResult.status === 'fulfilled' ? userResult.value.data : null;
@@ -134,6 +146,7 @@ export const ClubDataProvider = ({ children }) => {
                 friendMembershipMap: newFriendMembershipMap,
                 friendsArray: newFriendsArray,
                 profile: newProfile,
+                taxonomy: newTaxonomy,
             }
         });
     }, []);
@@ -153,6 +166,20 @@ export const ClubDataProvider = ({ children }) => {
         fetchAllData();
     }, [fetchAllData]);
 
+    // Flattened once per taxonomy fetch, not per card — every ClubGrid card does an
+    // O(1) lookup off these instead of scanning `taxonomy` on every render.
+    const { categoryNameById, subcategoryNameById } = useMemo(() => {
+        const categoryNameById = new Map();
+        const subcategoryNameById = new Map();
+        for (const cat of state.taxonomy) {
+            categoryNameById.set(cat.id, cat.name);
+            for (const sub of cat.subcategories || []) {
+                subcategoryNameById.set(sub.id, sub.name);
+            }
+        }
+        return { categoryNameById, subcategoryNameById };
+    }, [state.taxonomy]);
+
     const contextValue = useMemo(() => ({
         allData: state.allData,
         loading: state.loading,
@@ -162,10 +189,12 @@ export const ClubDataProvider = ({ children }) => {
         friendsArray: state.friendsArray,
         clubTopTags: state.clubTopTags,
         profile: state.profile,
+        categoryNameById,
+        subcategoryNameById,
         setProfile,
         invalidateFavoritesCache,
         refetch: fetchAllData
-    }), [state, invalidateFavoritesCache, fetchAllData]);
+    }), [state, categoryNameById, subcategoryNameById, invalidateFavoritesCache, fetchAllData]);
 
     return (
         <ClubDataContext.Provider value={contextValue}>

@@ -214,9 +214,9 @@
   height: 30px;
   border: none;
   border-radius: 50%;
-  background: #f0f0f0;
+  /* background: #f0f0f0; */
   color: #555;
-  font-size: 17px;
+  font-size: 30px;
   line-height: 1;
   cursor: pointer;
 }
@@ -375,6 +375,19 @@
 
 .mr-border-bottom-wrap {
   bottom: 0;
+}
+
+/* Safari-only (matches WebKit desktop + iOS, not Chrome/Firefox): the ink-line
+   SVG border doesn't render reliably here, so swap it for a plain 1px solid
+   border in the same color instead of trying to fix the SVG rendering. */
+@supports (-webkit-hyphens: none) {
+  .mr-border,
+  .mr-border-h-wrap {
+    display: none;
+  }
+  .mr-card {
+    border: 1px solid #000;
+  }
 }
 
 .mr-remove {
@@ -606,8 +619,27 @@
   bottom: 0;
 }
 
+/* Safari-only (matches WebKit desktop + iOS, not Chrome/Firefox): the ink-line
+   SVG border doesn't render reliably here, so swap it for a plain 1px solid
+   border in the same color instead of trying to fix the SVG rendering. */
+@supports (-webkit-hyphens: none) {
+  .mr-add-card-border,
+  .mr-add-card-border-h-wrap {
+    display: none;
+  }
+  .mr-add-card {
+    border: 1px solid #000;
+  }
+  /* .mr-add-card:hover changes border-color to #d9d9d9 above — the SVG version stays
+     black in both states (see "visible in both normal and hover states" comment
+     above), so this plain-border stand-in needs the same override. */
+  .mr-add-card:hover {
+    border-color: #000;
+  }
+}
+
 @media (max-width: 500px) {
   .mr-module {
-    padding-left: 0.3rem;
+    padding-left: 0.5rem;
   }
 }

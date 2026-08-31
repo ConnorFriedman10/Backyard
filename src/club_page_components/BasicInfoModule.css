@@ -53,11 +53,11 @@
 }
 
 .club-name-exp {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: "Oswald", sans-serif;
   margin-right: 5vh;
   align-self: flex-start;
   color: rgb(44, 27, 43);
-  font-weight: 400;
+  font-weight: 500;
   font-style: normal;
   letter-spacing: 0px;
   font-size: var(--name-size, 4rem);   /* --name-size is set per breakpoint on .content-col */
@@ -68,6 +68,7 @@
 /* One-line club name; marquee-scrolls only when it overflows .club-name-wrap */
 .club-name-wrap {
   width: 100%;
+  padding: 12px 0;
   overflow: hidden;
 }
 .club-name-track {
@@ -105,6 +106,12 @@
    only the right one shows per breakpoint. */
 .club-tag1--inline,
 .club-tag1--block { display: none; }
+
+/* Same two-copies pattern for club-interests-tagline (rules further down). Declared here,
+   before the @media blocks below that turn the right one on — a same-specificity
+   unconditional rule placed after them in source order would win regardless of viewport. */
+.club-interests-tagline--inline,
+.club-interests-tagline--block { display: none; }
 
 .club-tag2 {
   font-family: "Barlow Condensed", sans-serif;
@@ -301,13 +308,13 @@
   .content-col {
 
     width: 100%;
-    padding: 0.3rem 0.35rem;
+    padding: 0.3rem 0.5rem;
     display: flex;
     flex-direction: column;
     align-items: stretch;
   }
     .about-section {
-    padding-left: 0.3rem;
+    padding-left: 0.5rem;
   }
   .friend-avatar-img-bio {
   width: 1.8rem;
@@ -339,7 +346,9 @@
     width: 100%;
   }
 
-  /* Full-width rectangle: tag1 at the top-left (aligned with the name), logo centered below. */
+  /* Full-width rectangle: club-interests-tagline at the top-left (aligned with the name),
+     logo centered below. Height isn't fixed — flex-direction:column plus this padding lets
+     the box grow on its own to fit the tagline instead of clipping it. */
   .rectangle_min {
     width: 100%;
     box-sizing: border-box;
@@ -370,6 +379,7 @@
   }
 
   .club-tag1--block { display: block; }
+  .club-interests-tagline--block { display: block; }
   .club-tag1 {
     max-width: 100%;
     white-space: nowrap;
@@ -497,6 +507,10 @@
   }
 
   .club-tag1--inline { display: block; }
+  .club-interests-tagline--inline { display: block; }
+  .club-interests-tagline {
+    margin: -3px 0 0;
+  }
   .club-tag1 {
     /* half the name (calc in base); one row, overflow handled with … */
     margin-top: 0.01rem;   /* ⬅ ADJUST web name↔tag vertical gap here */
@@ -922,7 +936,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
-  padding-left: var(--mod-pad, 0.3rem); /* lines up with the rectangle's left edge */
+  padding-left: 0.5rem; /* lines up with the rectangle's left edge */
   box-sizing: border-box;
 }
 
@@ -1333,6 +1347,8 @@
 }
 
 .club-interests-tagline {
+  width: 100%;
+  box-sizing: border-box;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 1.4rem;
   letter-spacing: 0.05em;

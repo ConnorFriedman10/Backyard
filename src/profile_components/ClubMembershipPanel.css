@@ -60,8 +60,11 @@
   height: 280px;
 }
 
-.membership-card-wrapper .club-name {
-  max-width: 280px;
+/* ClubGrid.css sizes these rows to 90% of the image so they line up with it —
+   here the image is a fixed 280px rather than a percentage, so match it directly. */
+.membership-card-wrapper .club-card-media-row,
+.membership-card-wrapper .club-name-row {
+  width: 280px;
 }
 
 /* Safari-only (matches WebKit desktop + iOS, not Chrome/Firefox): the ink-line

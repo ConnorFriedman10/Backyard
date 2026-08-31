@@ -189,6 +189,23 @@
   flex-shrink: 0;
 }
 
+/* Below 700px there's no room for the controls at the row's end, so wrap the
+   card and drop them onto their own line under .member-badge-row instead —
+   indented (avatar width + .member-card's gap) to line up under the badge row
+   rather than the avatar. */
+@media (max-width: 700px) {
+  .member-card {
+    flex-wrap: wrap;
+  }
+
+  .member-card__controls {
+    order: 1;
+    flex-basis: 100%;
+    margin-left: calc(60px + 0.75rem);
+    margin-top: 0.4rem;
+  }
+}
+
 .member-role-select {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.85rem;

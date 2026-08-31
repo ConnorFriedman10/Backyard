@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabaseAdmin } from '../supabaseAdmin.js';
 import { PUBLIC_CLUB_COLUMNS, PUBLIC_REVIEW_COLUMNS } from '../lib/publicColumns.js';
+import { attachClubInterests } from '../lib/clubInterests.js';
 
 const router = express.Router();
 
@@ -34,7 +35,7 @@ router.get('/', async (req, res) => {
     throw err;
   }
 
-  res.json(data);
+  res.json(await attachClubInterests(supabaseAdmin, data));
 });
 
 

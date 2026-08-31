@@ -22,7 +22,6 @@ export const ProfileSettings = () => {
     if (form.loading) {
         return (
             <SkeletonRegion className="settings-section" label="Loading profile">
-                <h2 className="profile-divider-header">Profile</h2>
                 <div className="settings-form">
                     <Skeleton width="60px" height="0.8rem" />
                     <Skeleton height="2.4rem" radius={4} />
@@ -41,8 +40,6 @@ export const ProfileSettings = () => {
 
     return (
         <section className="settings-section">
-            <h2 className="profile-divider-header">Profile</h2>
-
             <form onSubmit={handleSubmit} className="settings-form">
                 <ProfileFields form={form} idPrefix="settings" />
 
@@ -59,10 +56,17 @@ export const ProfileSettings = () => {
                 </p>
 
                 <div className="settings-actions">
-                    <button type="submit" className="settings-save" disabled={form.submitting}>
-                        {form.submitting ? 'Saving…' : 'Save profile'}
-                    </button>
-                    {saved && <span className="settings-saved">Saved</span>}
+                    <div className="duo-btn-wrap">
+                        <div className="duo-btn-pill" aria-hidden="true" />
+                        <button
+                            type="submit"
+                            className={`settings-save duo-btn${saved ? ' settings-save--saved' : ''}`}
+                            style={{ '--duo-shadow': saved ? 'rgb(30, 90, 42)' : 'rgb(20, 17, 13)' }}
+                            disabled={form.submitting}
+                        >
+                            {form.submitting ? 'Saving…' : saved ? 'Saved' : 'Save profile'}
+                        </button>
+                    </div>
                 </div>
 
                 {form.error && <p className="settings-error">{form.error}</p>}

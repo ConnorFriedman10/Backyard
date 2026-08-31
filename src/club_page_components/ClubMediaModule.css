@@ -93,7 +93,7 @@
     display: none;
   }
   .cm-poster-card {
-    border: 1px solid #37291E;
+    border: 1px solid #000;
   }
 }
 
@@ -170,12 +170,13 @@
 }
 
 .cm-marquee-copy {
-  font-family: "Bebas Neue", sans-serif;
-  font-weight: 600;
+  font-family: "Oswald", sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
   font-size: 2.4rem;
   line-height: 1;
   letter-spacing: 0.5px;
- 
+
 }
 
 /* Trailing gap between repeats — only in marquee mode, so it's part of the -50% loop
@@ -257,7 +258,7 @@
     display: none;
   }
   .cm-poster-edit {
-    border: 1px solid #231f20;
+    border: 1px solid #000;
   }
 }
 
@@ -465,6 +466,25 @@
   bottom: 0;
 }
 
+/* Safari-only (matches WebKit desktop + iOS, not Chrome/Firefox): the ink-line
+   SVG border doesn't render reliably here, so swap it for a plain 1px solid
+   border in the same color instead of trying to fix the SVG rendering. */
+@supports (-webkit-hyphens: none) {
+  .cm-add-poster-border,
+  .cm-add-poster-border-h-wrap {
+    display: none;
+  }
+  .cm-add-poster {
+    border: 1px solid #000;
+  }
+  /* .cm-add-poster:hover changes border-color to #d9d9d9 above — the SVG version
+     stays black in both states (see "visible in both normal and hover states"
+     comment above), so this plain-border stand-in needs the same override. */
+  .cm-add-poster:hover {
+    border-color: #000;
+  }
+}
+
 /* ── Expanded portrait modal ── */
 .cm-modal-overlay {
   position: fixed;
@@ -550,7 +570,7 @@
     display: none;
   }
   .cm-modal {
-    border: 1px solid #37291E;
+    border: 1px solid #000;
   }
 }
 
@@ -582,8 +602,9 @@
 }
 
 .cm-modal-title {
-  font-family: "Bebas Neue", sans-serif;
-  font-weight: 400;
+  font-family: "Oswald", sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
   font-size: 2.8rem;
   line-height: 1.05;
   letter-spacing: 0.5px;
@@ -923,6 +944,6 @@
 
 @media (max-width: 500px) {
   .club-media-module {
-    padding-left: 0.3rem;
+    padding-left: 0.5rem;
   }
 }

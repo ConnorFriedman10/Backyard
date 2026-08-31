@@ -118,7 +118,7 @@ npm run dev:all
 
 ## The Team
 
-Built with care by **Milo Bell**, **Connor Friedman**, **Ryan Marshall**, and **Ryan Sinha**.
+Built with care by **Milo Bell**, **Connor Friedman**, **Ryan Marshall**, **Ryan Sinha**, and **Benjamin Hailu**.
 
 ---
 

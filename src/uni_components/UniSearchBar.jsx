@@ -1,7 +1,7 @@
-﻿import React, {useState, useEffect} from 'react'
+﻿import React, {useState, useEffect, useRef, useLayoutEffect} from 'react'
 import { apiFetch } from '../lib/api'
 import { useClubData } from '../context/useClubData'
-import {FaSearch, FaTh, FaThLarge, FaSquare} from 'react-icons/fa'
+import {FaSearch, FaTh, FaThLarge} from 'react-icons/fa'
 import './UniSearchBar.css'
 
 const CATEGORIES = [
@@ -30,7 +30,6 @@ const CATEGORIES = [
 const CARD_SIZE_OPTIONS = [
   { value: 'small', label: 'Small cards', glyph: <FaTh /> },
   { value: 'medium', label: 'Medium cards', glyph: <FaThLarge /> },
-  { value: 'large', label: 'Large cards', glyph: <FaSquare /> },
 ];
 
 export const UniSearchBar = ({
@@ -46,7 +45,19 @@ export const UniSearchBar = ({
   const [clubs, setClubs] = useState([])
   const [displayText, setDisplayText] = useState("")
   const { allData } = useClubData()
-  
+  const textareaRef = useRef(null)
+
+  // Below 500px (UniSearchBar.css) the bar wraps and grows with the query, like
+  // Claude's own composer — a plain <input> can't wrap or report a content height,
+  // hence the textarea. Re-measure on every value change (typed or programmatic,
+  // e.g. the typewriter placeholder swap doesn't touch `input` but clearing does).
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [input])
+
 
   const [typingSpeed, setTypingSpeed] = useState(100)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -163,7 +174,13 @@ useEffect(() => {
 
   return (
     <div className="club-input-wrapper">
-      <icon className="search-icon"><FaSearch /></icon>
+      {/* .usb-row-top/.usb-row-bottom are display:contents above 500px (UniSearchBar.css)
+          — the icon/input and the categories/size buttons lay out as direct flex
+          children of .club-input-wrapper, exactly as before this grouping existed.
+          Below 500px each becomes its own full-width flex row, so the bar reflows
+          to two lines without any duplicated markup per breakpoint. */}
+      <div className="usb-row-top">
+        <icon className="search-icon"><FaSearch /></icon>
 
         <div className="input-container">
 
@@ -175,17 +192,18 @@ useEffect(() => {
             )}
 
 
-        <input
-
+        <textarea
+            ref={textareaRef}
+            rows={1}
             onClick={(handleClick)}
-            type="text"
             value={input}
-
-
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
         />
-    </div>
+        </div>
+      </div>
 
+      <div className="usb-row-bottom">
         <div className="hamburger-wrapper">
           <button
             className={`uni-hamburger-btn ${activeCategory ? 'active' : ''}`}
@@ -230,6 +248,7 @@ useEffect(() => {
             </button>
           ))}
         </div>
+      </div>
     </div>
   )
 }

@@ -9,8 +9,8 @@ import { Skeleton, SkeletonRegion } from '../components/Skeleton'
 // Fantastical and Google alike, so an unset preference still works everywhere. The old UI
 // labelled it "Apple Cal", which was a mislabel — the format is not Apple-specific.
 const OPTIONS = [
-    { value: 'ics', label: 'Download a file (.ics)', hint: 'Works with Apple Calendar, Outlook, Fantastical and most others.' },
-    { value: 'google', label: 'Google Calendar', hint: 'Opens Google Calendar with the event pre-filled.' },
+    { value: 'ics', label: 'Apple Calendar, Outlook & others' },
+    { value: 'google', label: 'Google Calendar' },
 ]
 
 export const CalendarSettings = () => {
@@ -52,7 +52,6 @@ export const CalendarSettings = () => {
     if (loading) {
         return (
             <SkeletonRegion className="settings-section" label="Loading calendar settings">
-                <h2 className="profile-divider-header">Calendar</h2>
                 <Skeleton width="60%" height="0.9rem" />
                 <div className="settings-radio-group">
                     <Skeleton width="240px" height="1.1rem" />
@@ -64,9 +63,8 @@ export const CalendarSettings = () => {
 
     return (
         <section className="settings-section">
-            <h2 className="profile-divider-header">Calendar</h2>
-            <p className="settings-hint">
-                What the &ldquo;Add to calendar&rdquo; button on an event should do.
+            <p className="settings-radio-question">
+                What kind of calendar do you use?
             </p>
 
             <div className="settings-radio-group" role="radiogroup" aria-label="Calendar format">
@@ -81,7 +79,6 @@ export const CalendarSettings = () => {
                             disabled={saving}
                         />
                         <span className="settings-radio-label">{option.label}</span>
-                        <span className="settings-hint">{option.hint}</span>
                     </label>
                 ))}
             </div>

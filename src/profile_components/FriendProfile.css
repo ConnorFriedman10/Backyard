@@ -27,39 +27,35 @@
    destructive action on the page, so it should not compete with the content above it. */
 .friend-block-section {
   margin-top: 8px;
-  padding-bottom: 48px;
+  padding-bottom: 8px;
+  display: flex;
+  justify-content: center;
 }
 
 .friend-block-trigger {
-  font-family: 'Barlow Condensed', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 0.95rem;
-  color: #6b6257;
-  background: none;
-  border: none;
-  border-bottom: 1px solid #b9b1a5;
-  padding: 2px 0;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  background: #9f0a00 !important;
+  border-color: #9f0a00 !important;
+  color: #fff !important;
 }
 
-.friend-block-trigger:hover {
-  color: #8a3b2f;
-  border-color: #8a3b2f;
+.friend-block-trigger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.duo-btn-pill:has(+ .friend-block-trigger:disabled) {
+  opacity: 0.5;
 }
 
 .friend-block-confirm {
-  background: #f5f1ea;
-  border: 2px solid #2f2a22;
+  background: #eeeeee;
   border-radius: 4px;
   padding: 16px 18px;
   max-width: 460px;
-  box-shadow: 4px 5px 0 rgba(41, 36, 29, 0.12);
 }
 
 .friend-block-copy {
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.95rem;
   line-height: 1.4;
   color: #29241d;
@@ -72,27 +68,31 @@
   align-items: center;
 }
 
-.friend-block-cancel,
+.friend-block-cancel {
+  font-family: 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.9rem;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid #2f2a22;
+  transition: opacity 0.15s ease;
+  background: transparent;
+  color: #2f2a22;
+}
+
 .friend-block-danger {
   font-family: 'Barlow Condensed', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: 0.9rem;
   padding: 7px 16px;
-  border-radius: 999px;
+  border-radius: 8px;
   cursor: pointer;
   border: 2px solid #2f2a22;
-  transition: opacity 0.15s ease;
-}
-
-.friend-block-cancel {
-  background: transparent;
-  color: #2f2a22;
-}
-
-.friend-block-danger {
+  transition: opacity 0.15s;
   background: #8a3b2f;
-  border-color: #8a3b2f;
   color: #fff;
 }
 

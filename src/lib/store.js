@@ -15,11 +15,16 @@ export const useGlobalStore = create((set) => ({
   // component) to light up the calendar/clubs icon, since that view lives in
   // UniversityPage's own local state and isn't otherwise reachable from outside it.
   calendarViewActive: false,
+  // Whether the support modal is open. Lives here (not local App state) so the
+  // signed-in trigger button in ProfilePage's button row can open the same
+  // modal App renders, without threading a prop through the router.
+  supportOpen: false,
 
   setGlobalValue: (newValue) => set({ GlobalValue: newValue }),
   setLastPath: (path) => set({ lastPath: path }),
   setUnreadCount: (count) => set({ unreadCount: count }),
   setCalendarViewActive: (value) => set({ calendarViewActive: value }),
+  setSupportOpen: (value) => set({ supportOpen: value }),
 }));
 
 /*

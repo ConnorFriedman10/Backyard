@@ -17,8 +17,6 @@ export const AccountSettings = () => {
     const [pwError, setPwError] = useState(null)
 
     // Deletion
-    const [confirmingDelete, setConfirmingDelete] = useState(false)
-    const [confirmUsername, setConfirmUsername] = useState('')
     const [deleting, setDeleting] = useState(false)
     const [deleteError, setDeleteError] = useState(null)
 
@@ -51,13 +49,22 @@ export const AccountSettings = () => {
     }
 
     const deleteAccount = async () => {
+        const confirmed = window.confirm(
+            'Are you sure you want to delete your account? This cannot be undone.'
+        )
+        if (!confirmed) return
+
         setDeleting(true)
         setDeleteError(null)
 
         try {
             await apiFetch('/me/account', {
                 method: 'DELETE',
-                body: { confirmUsername },
+                // The server re-verifies this matches the authenticated user's own
+                // username — it's not a client-trusted value, just the shape that
+                // endpoint expects. Filled in automatically now that there's no typed
+                // confirmation field for the user to enter it into.
+                body: { confirmUsername: profile?.username },
             })
             // The auth user is gone; clear the local session so the app does not keep
             // presenting a signed-in shell backed by a dead token.
@@ -81,7 +88,6 @@ export const AccountSettings = () => {
     if (loading) {
         return (
             <SkeletonRegion className="settings-section" label="Loading account settings">
-                <h2 className="profile-divider-header">Account</h2>
                 <div className="settings-readonly">
                     <Skeleton width="60px" height="0.8rem" />
                     <Skeleton width="220px" height="1rem" />
@@ -100,8 +106,6 @@ export const AccountSettings = () => {
 
     return (
         <section className="settings-section">
-            <h2 className="profile-divider-header">Account</h2>
-
             <div className="settings-readonly">
                 <span className="setup-field-label">email</span>
                 <span className="settings-readonly-value">{profile?.email || '—'}</span>
@@ -138,83 +142,48 @@ export const AccountSettings = () => {
                 />
 
                 <div className="settings-actions">
-                    <button
-                        type="submit"
-                        className="settings-save"
-                        disabled={pwStatus === 'saving' || !password}
-                    >
-                        {pwStatus === 'saving' ? 'Updating…' : 'Update password'}
-                    </button>
-                    {pwStatus === 'done' && <span className="settings-saved">Password updated</span>}
+                    <div className="duo-btn-wrap">
+                        <div className="duo-btn-pill" aria-hidden="true" />
+                        <button
+                            type="submit"
+                            className={`settings-save settings-save--sm duo-btn${pwStatus === 'done' ? ' settings-save--saved' : ''}`}
+                            style={{ '--duo-shadow': pwStatus === 'done' ? 'rgb(30, 90, 42)' : 'rgb(20, 17, 13)' }}
+                            disabled={pwStatus === 'saving' || !password}
+                        >
+                            {pwStatus === 'saving' ? 'Updating…' : pwStatus === 'done' ? 'Updated' : 'Update password'}
+                        </button>
+                    </div>
                 </div>
 
                 {pwError && <p className="settings-error">{pwError}</p>}
             </form>
 
-            <div className="settings-actions">
-                <button type="button" className="settings-secondary" onClick={signOut}>
-                    Sign out
-                </button>
-            </div>
-
-            <div className="settings-danger">
-                <h3 className="settings-danger-title">Delete account</h3>
-
-                {confirmingDelete ? (
-                    <>
-                        <p className="settings-hint">
-                            This permanently deletes your account, profile, photos, favorites and
-                            RSVPs. Reviews you wrote stay on club pages but are no longer linked to
-                            you. This cannot be undone.
-                        </p>
-                        <label className="setup-field-label" htmlFor="settings-confirm-username">
-                            type <strong>{profile?.username}</strong> to confirm
-                        </label>
-                        <input
-                            id="settings-confirm-username"
-                            className="setup-school-input"
-                            value={confirmUsername}
-                            onChange={(e) => setConfirmUsername(e.target.value)}
-                            autoComplete="off"
-                        />
-                        <div className="settings-actions">
-                            <button
-                                type="button"
-                                className="settings-secondary"
-                                onClick={() => {
-                                    setConfirmingDelete(false)
-                                    setConfirmUsername('')
-                                    setDeleteError(null)
-                                }}
-                                disabled={deleting}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="settings-danger-btn"
-                                onClick={deleteAccount}
-                                disabled={
-                                    deleting ||
-                                    confirmUsername.trim().toLowerCase() !==
-                                        (profile?.username || '').toLowerCase()
-                                }
-                            >
-                                {deleting ? 'Deleting…' : 'Permanently delete'}
-                            </button>
-                        </div>
-                        {deleteError && <p className="settings-error">{deleteError}</p>}
-                    </>
-                ) : (
+            <div className="settings-actions settings-account-actions">
+                <div className="duo-btn-wrap">
+                    <div className="duo-btn-pill" aria-hidden="true" />
                     <button
                         type="button"
-                        className="settings-danger-trigger"
-                        onClick={() => setConfirmingDelete(true)}
+                        className="settings-secondary settings-logout-btn duo-btn"
+                        style={{ '--duo-shadow': 'rgb(122, 48, 47)' }}
+                        onClick={signOut}
                     >
-                        Delete my account
+                        Logout
                     </button>
-                )}
+                </div>
+                <div className="duo-btn-wrap">
+                    <div className="duo-btn-pill" aria-hidden="true" />
+                    <button
+                        type="button"
+                        className="settings-danger-btn duo-btn"
+                        style={{ '--duo-shadow': 'rgb(110, 12, 8)' }}
+                        onClick={deleteAccount}
+                        disabled={deleting}
+                    >
+                        {deleting ? 'Deleting…' : 'Delete account'}
+                    </button>
+                </div>
             </div>
+            {deleteError && <p className="settings-error">{deleteError}</p>}
         </section>
     )
 }

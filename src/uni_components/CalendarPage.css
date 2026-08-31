@@ -2,7 +2,9 @@
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
-    overflow-x: auto;
+    /* One declaration: the old `overflow-x: auto` immediately below an
+       `overflow: hidden` shorthand was dead — the shorthand reset both axes.
+       .calpg-week-row re-opens the x axis for the day slider. */
     overflow: hidden;
 }
 
@@ -66,14 +68,19 @@
 
 .calendar-event .friend-rsvp-callout {
   margin: 0;
-  text-align: center;
+  justify-content: center;
 }
 
 /* Minimized poster view — same outer .calendar-event button, but its
    content is a single bordered row (shrunken square poster + title) instead
    of the tall .cal-portrait-img-wrap card. Toggled via .calpg-poster-size-toggle. */
 .calendar-event--minimized {
-  margin-bottom: 8px;
+  /* .day-title-number has no explicit width, so it just stretches to its parent
+     (.calendar-day) — the same parent this shares, making 80% here read as 80%
+     of the day header too, freeing up a little side width instead of running
+     edge to edge with it. */
+  width: 90%;
+  margin: 0 auto 8px;
   background-color: var(--dominant-color, rgb(211, 211, 211));
   border-radius: 8px;
   overflow: hidden;
@@ -97,8 +104,11 @@
 
 .calendar-event-min-thumb {
   flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
+  /* Bumped up from 44px so the thumbnail reads as a real square next to two
+     lines of text (event name + club name) instead of the single line this
+     row used to hold. */
+  width: 60px;
+  height: 60px;
   object-fit: cover;
   border-radius: 3px;
 }
@@ -109,16 +119,33 @@
   background: rgba(0, 0, 0, 0.04);
 }
 
-.calendar-event-min-row .cal-portrait-title-wrap {
+.calendar-event-min-text {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
+  gap: 2px;
+}
+
+.calendar-event-min-text .cal-portrait-title-wrap {
   width: auto;
   max-width: none;
   margin: 0;
 }
 
-.calendar-event-min-row .cal-portrait-title-track {
+.calendar-event-min-text .cal-portrait-title-track {
   justify-content: flex-start;
+}
+
+.calendar-event-min-club {
+  margin: 0;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* --- module wrapper --- */
@@ -577,6 +604,93 @@
   object-fit: contain;
 }
 
+/* Height-driven poster for the narrow week view. Scoped by ancestor
+   (.calpg-week-day-events, week view only) rather than by a JS-applied class,
+   so the lightbox's own .cal-portrait-img-wrap is untouched and keeps the 3/4
+   above. Nothing here is measured: the height chain in the week-view block
+   below gives the card a definite height, and the fixed aspect-ratio turns
+   that height into a width — the old width:auto + aspect-ratio:auto pair was
+   circular, which is why it needed JS to break the cycle.
+
+   4/5 with a poster, 1/1 with the club-logo fallback. Overrides the base
+   rule's 3/4 and its calc(100% + 24px) bleed: the poster sits inside the
+   wrap's padding here rather than running through it. */
+@media (max-width: 700px) {
+  .calpg-week-day-events .cal-portrait-img {
+    /* 0% basis, not auto: the ratio below has to be applied to the height flex
+       actually hands out, and WebKit has a history of transferring the ratio
+       from the flex *base* size instead of the used size. A definite base
+       leaves nothing to interpret — the image grows into whatever the title
+       and callout leave over, and the ratio follows from that. */
+    flex: 1 1 0%;
+    min-height: 0;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    /* cover, not contain: the height here is fixed by flex, so if a very wide
+       poster ever gets clamped by max-width the image still fills that height
+       (cropping horizontally) instead of letterboxing and leaving the card short. */
+    object-fit: cover;
+  }
+
+  .calpg-week-day-events .cal-portrait-img--default {
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+  }
+
+  /* The card hugs the poster, width derived from the events box's height.
+     Full width doesn't work here: the poster's width comes from the *height*
+     it's given, so on a short-wide viewport the two diverge badly — at 650x900
+     the pane was 513px around a 262px poster, leaving 125px of white on each
+     side, while at 390x844 the same rule left 18px.
+     `width: fit-content` can't hug either: computing it needs the image's
+     intrinsic contribution, which needs its flexed height, which needs this
+     card's height — circular, so the browser falls back to the poster's natural
+     width (~1080px) and clamps to 100%.
+     cqh breaks the cycle. The box's height is the one length here that isn't
+     derived from anything else, so the same arithmetic flex does vertically can
+     be done up front: take the height, subtract everything that isn't poster,
+     apply the ratio, add the padding back. min(100%, …) keeps a tall-narrow
+     viewport from pushing the card wider than the pane. */
+  .calpg-week-day-events .cal-portrait-img-wrap {
+    /* Everything in the box that the poster doesn't get: the event card's own
+       5px top + bottom, this card's 12px top + bottom, the 4px flex gap, the
+       4px title margin, and the title itself — one line, always, since
+       .cal-portrait-title-track is nowrap and marquees instead of wrapping
+       (PortraitTitle.css). Being a few px off only costs a few px of slack;
+       it can never crop, because of the min() above. */
+    --calpg-below-poster: 32px;
+    --calpg-poster-ratio: 0.8;
+
+    height: 100%;
+    width: min(100%, calc(
+      (100cqh - 10px - 24px - var(--calpg-below-poster))
+      * var(--calpg-poster-ratio) + 24px
+    ));
+    margin-inline: auto;
+  }
+
+  /* The friends row is the only thing below the poster whose presence varies —
+     FriendRsvpCallout returns null with no friends — so it's the only case
+     :has() is needed for. 4px gap + a 28px avatar row. */
+  .calpg-week-day-events .cal-portrait-img-wrap:has(.friend-rsvp-callout) {
+    --calpg-below-poster: 64px;
+  }
+
+  /* The club-logo fallback is square, so its width is its height. */
+  .calpg-week-day-events .cal-portrait-img-wrap:has(.cal-portrait-img--default) {
+    --calpg-poster-ratio: 1;
+  }
+
+  /* Whatever the poster leaves over is theirs — they must not be squeezed by the
+     image's flex-grow. */
+  .calpg-week-day-events .cal-portrait-title-wrap,
+  .calpg-week-day-events .friend-rsvp-callout {
+    flex-shrink: 0;
+  }
+}
+
 .cal-portrait-no-img {
   color: rgba(0, 0, 0, 0.4);
   font-size: 13px;
@@ -608,11 +722,16 @@
   position: relative;
   background: #fff;
 
-padding: 0 10px;
+  /* .calpg-header reads these back to bleed its background into the card's own
+     padding (see the note there). They were referenced but never defined, which
+     made those margin/padding declarations invalid at computed-value time — the
+     header silently fell back to 0 on both. Kept in sync with the padding below
+     by definition rather than by hand. */
+  --calpg-pad-x: 10px;
+  --calpg-pad-top: 0px;
+  padding: var(--calpg-pad-top) var(--calpg-pad-x);
 
-  
   width: 100%;
-
   height: 100%;
   box-sizing: border-box;
   overflow-y: auto;
@@ -632,29 +751,6 @@ padding: 0 10px;
     box-shadow: 0 9px 10px rgba(41, 36, 29, 0.22),
       6px 8px 0 rgba(41, 36, 29, 0.12);
   }
-}
-
-.calpg-close {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  background: #f0f0f0;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  transition: background 0.15s;
-}
-
-.calpg-close:hover {
-  background: #e0e0e0;
 }
 
 .cal-unauthed-msg {
@@ -751,6 +847,12 @@ padding: 0 10px;
   max-width: 500px;
 }
 
+@media (max-width: 500px) {
+  .calpg-grid-panel {
+    margin-top: 10px;
+  }
+}
+
 .calpg-grid-panel-next {
   display: none;
 }
@@ -773,7 +875,9 @@ padding: 0 10px;
 }
 
 .calpg-month {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: "Oswald", sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
   font-size: 6rem;
   letter-spacing: 1px;
   color: #3b3c3c;
@@ -864,17 +968,36 @@ padding: 0 10px;
   padding: 0;
   line-height: 0;
   cursor: pointer;
+  /* Was two swapped PNGs (one per active/inactive state); now one react-icons
+     svg per button, so the active state is a color change instead. */
+  color: #999;
+  transition: color 150ms ease;
 }
 
-.calpg-poster-size-btn img {
+.calpg-poster-size-btn svg {
   display: block;
-  height: 16px;
-  width: auto;
+  height: 22px;
+  width: 22px;
+}
+
+.calpg-poster-size-btn--active {
+  color: #e8793a;
 }
 
 @media (max-width: 700px) {
   .calpg-toggle-btn {
     font-size: 1.5rem;
+  }
+}
+
+/* Above 700px only the minimized layout is allowed (see the resize guard in
+   CalendarPage.jsx that forces posterSize to 'minimized' there) — nothing to toggle
+   when the full poster isn't an option, so the whole control disappears rather than
+   offering a choice that doesn't actually exist. At or below 700px both modes are
+   available, so the toggle shows normally. */
+@media (min-width: 701px) {
+  .calpg-poster-size-toggle {
+    display: none;
   }
 }
 
@@ -938,12 +1061,29 @@ padding: 0 10px;
   }
 }
 
+/* The week view's first day is always today (weekDays starts from todayDate in
+   CalendarPage.jsx) and reads "Today" rather than its weekday name — at every
+   width, so the .calpg-today-full/-abbr pair and their 500px breakpoint are
+   gone. Every other day still abbreviates under 700px via .calpg-day-abbr. */
+
 /* ===== INLINE CALENDAR MONTH VIEW WEEKDAY HEADER (S M T W T F S) ===== */
 .calpg-weekday-label {
   font-family: "Barlow Condensed", sans-serif;
   font-weight: 600;
   font-size: 1.2rem;
   color: #3b3c3c;
+}
+
+/* Experiment: hide the date number and center the day name (e.g. "SUNDAY") on wider
+   screens too, not just the narrow layout below — separate rule so it doesn't disturb
+   the max-width: 700px block's other narrow-screen-only sizing below. */
+@media (min-width: 501px) {
+  .calpg-day-title {
+    justify-content: center;
+  }
+  .calpg-day-num {
+    display: none;
+  }
 }
 
 @media (max-width: 700px) {
@@ -953,14 +1093,242 @@ padding: 0 10px;
   .calpg-day-num {
     display: none;
   }
+  /* ===== NARROW WEEK VIEW LAYOUT =====
+     One height chain, no measurement: the card is a flex column of
+     header (natural) + week row (the rest); each day column is a flex column of
+     day title (natural) + events box (the rest); each event card fills that box.
+     .calpg-card lives in .uni-calendar-inline, which is absolutely positioned
+     with both top and bottom set (UniversityPage.css), so height:100% here is a
+     real, definite height for the chain to divide up.
+
+     min-height:0 on the row and the events box is load-bearing — flex items
+     default to min-height:auto and refuse to shrink below their content, which
+     is what used to push the poster past the card's bottom edge. */
+  .calpg-card--week {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Makes cqw below mean "a percent of the card's content width" — a box that
+       nothing inside the week view can shrink. Every horizontal measurement in
+       this block is expressed against it, so the day column's width and the
+       events box's bleed are finally percentages of the *same* fixed thing
+       rather than of each other. */
+    container-type: inline-size;
+  }
+
+  .calpg-card--week .calpg-header {
+    flex: 0 0 auto;
+  }
+
+  .calpg-week-row {
+    flex: 1 1 auto;
+    min-height: 0;
+    scroll-snap-type: x mandatory;
+    /* The events box inside this row is itself a scroll container, on the other
+       axis. Without an axis lock both of them are candidates for the same touch,
+       and WebKit hands it to one, then re-snaps the other after layout — which
+       reads as a jerk mid-swipe. pan-x here (pan-y there) makes the browser
+       commit each gesture to exactly one scroller. */
+    touch-action: pan-x;
+    /* A fling that runs off the end of the week must not scroll the university
+       page sitting behind the calendar. */
+    overscroll-behavior-x: contain;
+    /* No side padding, and cqw rather than %: the old `padding: 0 33%` shrank
+       the very content box the column's `46%` flex-basis was measured against,
+       so the columns came out ~16% of the card wide and min-width:130px ended
+       up doing the real sizing. Against the card's container width nothing here
+       feeds back into anything else. */
+    padding: 0;
+    /* Purely the day-tab rhythm — the events box below bleeds to the card's
+       full width regardless, so this no longer has any say in how wide a poster
+       can be. Sized so the neighbouring day's abbreviated label lands fully on
+       screen either side of the active one with a little margin to spare: the
+       strip has to read as a slider on its own, since the events area gives no
+       hint that there are days to swipe to. */
+    --calpg-day-w: 36cqw;
+    /* How wide the event pane is, as a share of the card's content width.
+       Separate knob from --calpg-day-w: that one only sets the tab rhythm.
+       Narrowing this trims white margin on short-wide viewports but tightens
+       max-width on tall-narrow ones, where it crops the poster instead — 92cqw
+       took a 360x900 poster from 0.737 to 0.673. Full width is the safe end of
+       that trade; the white margin is a separate problem (the card doesn't hug
+       the poster) and can't be fixed from here. */
+    --calpg-pane-w: 100cqw;
+  }
+
+  /* The room the first and last day need to physically reach the center;
+     scroll-snap-align below is what makes the centering itself exact.
+
+     Deliberately pseudo-elements and not `padding-inline` on the row: WebKit
+     (and older Chrome) drop the *trailing* padding of a horizontally scrolling
+     flex container, so with padding the last day could never scroll to center.
+     Don't "simplify" these away. */
+  .calpg-week-row::before,
+  .calpg-week-row::after {
+    content: '';
+    flex: 0 0 calc((100cqw - var(--calpg-day-w)) / 2);
+  }
+
   .calpg-week-day {
-    flex: 0 0 46%;
-    min-width: 130px;
+    flex: 0 0 var(--calpg-day-w);
+    min-width: 0;
+    scroll-snap-align: center;
+    /* A fast fling used to fly past three or four days. `always` forces the
+       scroll to stop at the very next day, which is what a day slider should
+       do — you never overshoot the day you were aiming for. */
+    scroll-snap-stop: always;
+  }
+
+  .calpg-day-title {
+    flex: 0 0 auto;
+  }
+
+  /* Only the highlighted day's events render — everything else stays
+     hidden (but mounted) until it becomes active. The active one bleeds
+     symmetrically out of its own column to the card's full width, centered
+     under its own (centered) day header — the poster needs that width: a
+     height-filling 4/5 poster is ~266px wide on a 375px screen, far more than
+     a day column holds, and max-width would crop it back to ~0.65 instead.
+     Unlike the old 192%/-46% pair, these are shares of the card's container
+     width, so they cancel exactly whatever --calpg-day-w is set to. */
+  .calpg-week-day-events {
+    display: none;
+  }
+
+  .calpg-week-day-events--active {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: var(--calpg-pane-w);
+    margin-inline: calc((var(--calpg-day-w) - var(--calpg-pane-w)) / 2);
+    /* A plain opacity transition wouldn't fire on a display:none -> flex
+       swap, since there's no "from" state to animate from — an animation
+       (re-triggered every time this class gets added) fades it in instead. */
+    animation: calpg-day-events-fade-in 400ms ease;
+    /* A day with several events scrolls inside this box rather than scrolling
+       .calpg-card, so the day tabs above never move.
+
+       Both axes named on purpose. Setting only overflow-y makes overflow-x
+       compute to auto rather than staying visible, which would quietly turn
+       this into a horizontal scroll container sitting directly under the
+       finger — competing with .calpg-week-row for the day-swipe gesture.
+
+       Two longhands rather than the `overflow: hidden auto` shorthand: the
+       two-value form is Safari 15+, and older WebKit drops the whole
+       declaration (leaving overflow visible, so this would not scroll at all).
+       The longhands are understood everywhere. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* cqh below resolves against this box — the one length in the whole layout
+       that the poster's size is actually derived from. Safe to contain: this
+       box's height comes from the flex chain above it, never from its content. */
+    container-type: size;
+    /* Same reasoning as the row's pan-x, other axis. */
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+  }
+
+  /* Each maximized card is exactly one box-height, so a multi-event day pages
+     one card at a time. --paged is set in CalendarPage.jsx only for maximized
+     mode with more than one event: the minimized rows are short and
+     variable-height, and snapping items smaller than the scrollport traps the
+     scroll between them, while a lone card has nothing to page to.
+
+     proximity, not mandatory: this box's contents change constantly — the
+     day swap is a display:none -> flex switch, there's a fade animation on
+     top of it, and posters resolve their size on load. A mandatory container
+     re-resolves its snap position on every one of those and can yank the
+     scroll; proximity only engages when the user lets go near a snap point. */
+  .calpg-week-day-events--paged {
+    scroll-snap-type: y proximity;
+  }
+
+  /* Fills what the day title left over, with the 5px vertical breathing room
+     as padding rather than a bottom margin — so it's inside the height budget
+     instead of something the old measurement had to subtract back out. */
+  .calpg-week-day-events .calendar-event:not(.calendar-event--minimized) {
+    /* flex-basis, not height:100%. Both mean "one box tall", but a percentage
+       height resolved against a parent whose own height is flex-derived is the
+       shakiest link in this chain on WebKit, whereas a flex-basis against the
+       container's main size is unambiguous. */
+    flex: 0 0 100%;
+    /* Required alongside the basis, not decoration: a flex item's automatic
+       minimum size is content-based, so without this the card is floored at
+       the poster's min-content height and grows *past* one box instead of
+       being exactly one. */
+    min-height: 0;
+    height: auto;
+    width: auto;
+    align-items: center;
+    padding: 5px 0;
+    margin: 0;
+    box-sizing: border-box;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .calpg-week-day-events--active::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Tapping a day tab (or a programmatic scroll) animates instead of jumping.
+     Motion-safe only, and scoped here so the wider layout — which has no snap
+     and no day slider — is unaffected. */
+  @media (prefers-reduced-motion: no-preference) {
+    .calpg-week-row {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Anchors the "more events below" cue. Scoped to this breakpoint so it can't
+     introduce a stacking context for the wider layout, where the cue never
+     renders anyway (no fixed height there means nothing overflows). */
+  .calpg-week-day {
+    position: relative;
+  }
+
+  /* Sibling of the scrolling box, not a child — inside it, it would scroll away
+     with the content it's advertising. Matches .cal-overlay-more-arrow
+     (CalendarModule.css), the same cue in the club-page lightbox.
+     react-icons' IoChevronDownCircle already draws its own circle-and-chevron
+     glyph, so — unlike the old unicode-arrow-in-a-badge version — there's no
+     separate background-color/border-radius here; the svg is sized directly. */
+  .calpg-day-more-arrow {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    width: 34px;
+    height: 34px;
+    color: #3b3c3c;
+    pointer-events: none;
+    animation: cal-arrow-bounce 1.4s ease-in-out infinite;
+    /* IoChevronDownCircle is one filled path — the ring and the chevron are
+       cut from the same shape, so the chevron (and the thin margin around the
+       ring, inside this 34x34 box) is transparent, not "empty". Sitting over
+       a poster, that let whatever photo was underneath show through instead
+       of a clean white. A round background behind the glyph, sized to the box
+       an SVG element gets one like any other element, fills that gap. */
+    background-color: #fff;
+    border-radius: 50%;
+  }
+
+  @keyframes cal-arrow-bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(4px); }
+  }
+
+  @keyframes calpg-day-events-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 }
 
 @media (max-width: 400px) {
- 
+
   .calpg-month {
     font-size: 4rem;
   }
@@ -970,4 +1338,43 @@ padding: 0 10px;
   height: auto;
   object-fit: contain;
 }
+}
+
+.calpg-week-day-events > p {
+  text-align: center;
+  font-family: "Barlow Condensed", sans-serif;
+}
+
+/* Empty day. Inherits .calendar-event's button reset (no background, border or
+   padding), so the box itself is invisible — it exists only to give the
+   horizontal day swipe a full-height target on days with nothing scheduled.
+   Height comes from CalendarPage.jsx, matching a real poster card. */
+.calendar-event--empty {
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+/* The text was a direct child of .calpg-week-day-events before it moved inside
+   this card, so the `> p` rule above no longer reaches it. */
+.calendar-event--empty p {
+  margin: 0;
+  text-align: center;
+  font-family: "Barlow Condensed", sans-serif;
+  /* One step up in size from the inherited body text — it's the only thing in
+     an otherwise empty card, so it was reading as too faint and small. Lighter
+     gray than .calpg-weekday-label's #3b3c3c: this is a placeholder for an
+     empty state, not a label, and shouldn't read as dark as real content. */
+  font-size: 1.35rem;
+  color: #979797;
+}
+
+.calpg-week-day-events .friend-rsvp-text,
+.calpg-week-day-events--active .friend-rsvp-text {
+  display: none;
+}
+
+.cal-portrait-info .friend-rsvp-text {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 18px;
 }

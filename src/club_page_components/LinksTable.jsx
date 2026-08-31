@@ -299,4 +299,19 @@ const cssText = `
   }
   .lt-border-top-wrap { top: 0; }
   .lt-border-bottom-wrap { bottom: 0; }
+
+  /* Safari-only (matches WebKit desktop + iOS, not Chrome/Firefox): the ink-line
+     SVG border doesn't render reliably here, so swap it for a plain 1px solid
+     border in the same color instead of trying to fix the SVG rendering.
+     !important is required because .lt-table-box's white border is set inline
+     (style={{ border: ... }}), which a stylesheet rule can't outrank otherwise. */
+  @supports (-webkit-hyphens: none) {
+    .lt-border,
+    .lt-border-h-wrap {
+      display: none;
+    }
+    .lt-table-box {
+      border: 1px solid #000 !important;
+    }
+  }
 `;

@@ -5,6 +5,11 @@
   
   padding: 20px;
   width: 100%;
+  /* Set per [data-size] in ClubList.css — the grid track itself is always 1fr (so
+     gaps stay exactly what's specified and the row always fills the list exactly,
+     edge to edge), so a per-size cap on how big an individual card gets lives here
+     instead, on the card, centered within its (possibly wider) cell. */
+  max-width: var(--card-max-width, none);
   border-radius: 2px;
   box-sizing: border-box;
   margin: 0 auto;
@@ -12,14 +17,16 @@
   flex-direction: column;
   align-items: center;
   container-type: inline-size;
+  container-name: club-card;
   gap: 0.5rem;
- 
+
   box-shadow:0 9px 10px rgba(41, 36, 29, 0.22),
     6px 8px 0 rgba(41, 36, 29, 0.12);
   cursor: pointer;
   transition: transform 0.6s ease, border-color 0.3s ease;
   z-index: 100;
 }
+
 
 .club-card-border {
   position: absolute;
@@ -82,11 +89,12 @@
 /* Apply same texture to image container */
 .image-container {
   position: relative;
-  width: 25vw;
-  min-width: 185px;
-  height: 25vw;
-  min-height: 185px;
-   /* Clip the pseudo-element */
+  overflow: hidden;   /* clips club-img-crop's oversized edges — see below */
+  /* Full width of the card, always square — the grid (ClubList.css) is what
+     actually controls how big the card itself gets at any given width, so this
+     never needs per-breakpoint tuning to match. */
+  width: 100%;
+  aspect-ratio: 1;
 }
 
 .image-container::before {
@@ -96,43 +104,78 @@
   background-image: url('/src/assets/white-paper-texture.jpg');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   filter: brightness(1.25) contrast(0.9);  /* Match card brightness */
   z-index: -1;
 }
 
+/* Enlarged (÷0.92) and centered over .image-container, which clips its overflow —
+   only the center 92% of whatever's inside is ever visible. This is a plain <div>
+   rather than sizing .club-img itself: percentage width/height on an absolutely-
+   positioned, transform-centered <img> resolves to the container's own size
+   regardless of the percentage value in testing (a replaced-element quirk; an
+   identical plain <div> resolves correctly), so the crop math lives here and
+   .club-img just fills this div at a plain 100%. Overridden per-breakpoint below
+   only if that breakpoint's .image-container uses a different crop factor. */
+.club-img-crop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% / 0.92);
+  height: calc(100% / 0.92);
+}
+
 .club-img {
-  position: relative;
+  display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
   border-radius: 0px;
   font-size: 2rem;
   z-index: 1;  /* Above the texture */
-  
+  filter: brightness(1.1) contrast(0.9);
+
   /* If it's an actual <img>, blend it with the texture */
   mix-blend-mode: multiply;  /* Blends with texture background */
 }
 
+.club-name-row {
+  display: flex;
+  /* flex-start, not flex-end: with a wrapped multi-line name the row is taller than
+     the heart, and flex-end would pin the heart to the bottom (last line) instead of
+     next to the first line of text. The heart still lands at the right edge on the
+     main axis since .club-name is the only flex-growing item before it. */
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin-top: 5px;
+}
+
 .club-name {
-  font-family: "Bebas Neue", "Be Vietnam Pro", sans-serif;
-  font-weight: 400;
+  font-family: "Oswald", "Be Vietnam Pro", sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
   text-align: left;
   position: relative;
   line-height: 1.05;
   color: #29241d;
-  margin-top: 15px;
   font-style: normal;
-  
-  font-size: clamp(26px, 13cqi, 50px);
-  white-space: pre-wrap;
-  word-break: break-word;
-  width: 100%;
-  max-width: 25vw;
-  min-width: 185px;
-  padding-right: 35px;
-  box-sizing: border-box;
-}
-  
 
+  font-size: var(--club-name-size);
+  word-break: break-word;
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+
+  /* Ellipsis on the 3rd line, rather than a fixed word count — truncates
+     consistently at whatever width the card actually renders. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Shown when favoriting fails — a rate limit, or the request not going through. Without
    it the heart just silently reverted and the click looked like it did nothing. */
@@ -148,21 +191,19 @@
   box-sizing: border-box;
 }
 
-.club-info{
+.club-tagline {
   margin: 0;
-  color: rgb(0, 0, 0);
+  color: #29241d;
   font-family: "Barlow Condensed", sans-serif;
-  font-size: clamp(15px, 5.2cqi, 25px);
+  font-weight: 400;
+  font-size: calc(var(--club-name-size) * 0.5);
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
   box-sizing: border-box;
-
   text-align: left;
-  font-weight: 400;
-  
   letter-spacing: 0.9px;
 }
 
@@ -184,14 +225,12 @@
 }
 
 .heart-btn {
-  position:absolute;
   width: 30px;
   height: 28px;
-  bottom: -45px;
-  right: 0;      
+  margin-top: 3px;
   cursor: pointer;
-  z-index: 50;
-  
+  flex-shrink: 0;
+
   transition: transform 0.12s ease;
   user-select: none;
 }
@@ -199,10 +238,11 @@
 .flex-card{
   display: flex;
   flex-direction: column;
-  align-items: start;
+  align-items: center;
   align-self: center;
   container-type: inline-size;
-  width:100%
+  width: 100%;
+  --club-name-size: clamp(26px, 13cqi, 50px);
 }
 
 .heart-btn.pop {
@@ -215,82 +255,29 @@
   100% { transform: scale(1); }
 }
 
-/* --- MOBILE: 1 Column — cards take ~80% of screen (container set via Tailwind in ClubList) --- */
-@media (max-width: 649px) {
-  .image-container {
-    width: 85%;
-    aspect-ratio: 1;
-    height: auto;
-  }
-  .club-name {
-    max-width: 85%;
-    min-width: 0;
-  }
-}
-
-/* --- TABLET: 2 Columns (75vw total space) --- */
-/* 75 / 2 = 37.5. We use 34vw to account for gaps. */
-@media (min-width: 650px) and (max-width: 1099px) {
-  .club-card {
-    width: calc(34vw * var(--card-scale, 1));
-  }
-  .image-container, .club-img {
-    width: calc(28vw * var(--card-scale, 1));
-    height: calc(28vw * var(--card-scale, 1));
-  }
-  .club-name {
-    max-width: calc(28vw * var(--card-scale, 1));
-  }
-}
-
-/* --- LAPTOP/DESKTOP: 3 Columns (75vw total space) --- */
-/* 75 / 3 = 25. We use 22vw to account for gaps. */
-@media (min-width: 1100px) and (max-width: 1999px) {
-  .club-card {
-    width: calc(22vw * var(--card-scale, 1));
-  }
-  .image-container, .club-img {
-    width: calc(18vw * var(--card-scale, 1));
-    height: calc(18vw * var(--card-scale, 1));
-  }
-  .club-name {
-    max-width: calc(18vw * var(--card-scale, 1));
-  }
-}
-
-/* --- ULTRA WIDE: 4 Columns (75vw total space) --- */
-/* 75 / 4 = 18.75. We use 16vw to account for gaps. */
-@media (min-width: 2000px) {
-  .club-card {
-    width: calc(16vw * var(--card-scale, 1));
-
-    max-width: 530px;
-
-  }
-  .image-container, .club-img {
-    width: calc(14vw * var(--card-scale, 1));
-    max-width: 450px;
-    height: calc(14vw * var(--card-scale, 1));
-    max-height: 450px;
-
-  }
-  .club-name {
-    max-width: calc(14vw * var(--card-scale, 1));
-  }
-}
-
-/* --- Friend avatar stack on club cards --- */
-.friend-avatars {
+/* --- Friend avatar / mod badge / favorite row, under the image ---
+   Named .club-card-media-row rather than .club-media-row: that name collides with
+   an unrelated class in ClubMediaModule.css (the club page's poster gallery), and
+   since both rules have identical specificity, whichever file's CSS happened to
+   load later in the bundle silently won the tie. */
+.club-card-media-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-top: 8px;
+  padding-bottom: 4px;
   width: 100%;
 }
 
 .friend-avatars-left {
   display: flex;
   align-items: center;
+}
+
+.club-card-media-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .mod-badge {
@@ -326,4 +313,22 @@
   font-weight: 600;
   color: #2c4630;
   white-space: nowrap;
+}
+
+/* Cards get cramped once the card itself is this narrow (rather than reacting to
+   viewport width, which doesn't track actual card width in a fluid grid) — let the
+   image and the rows aligned to it bleed past the card's own padding instead of
+   shrinking further, so the media still has room.
+   Threshold is 180px minus .club-card's own 40px of horizontal padding (20px each
+   side): container queries measure the container's content box, not its rendered
+   (border-box) width, so querying "180px" directly here would only actually fire
+   once the rendered card reached 220px — confirmed by sweeping actual card widths
+   and finding the real cutoff 40px later than intended. */
+@container club-card (max-width: 140px) {
+  .image-container,
+  .club-name-row,
+  .club-tagline,
+  .club-card-media-row {
+    width: 120%;
+  }
 }

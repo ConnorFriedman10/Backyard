@@ -11,9 +11,9 @@ import { supabase } from "../lib/supabase";
 import borderImg from '/src/assets/border-green.svg';
 import borderHorizontalImg from '/src/assets/border-horizontal-green.svg';
 
-// The compact trigger (avatar/login icon) now lives in NavBar, sharing this
-// component's layoutId="login" so the icon-to-card morph still animates —
-// LoginMorph itself only owns the expanded login/signup/forgot-password card.
+// The compact trigger (avatar/login icon) lives in NavBar as a plain button —
+// LoginMorph itself only owns the expanded login/signup/forgot-password card,
+// which just fades/scales in on its own rather than morphing from the icon.
 function LoginMorph({ open, setOpen }) {
   const setLastPath = useGlobalStore((state) => state.setLastPath);
   const navigate = useNavigate();
@@ -82,7 +82,6 @@ function LoginMorph({ open, setOpen }) {
     <AnimatePresence>
       {open && (
         <motion.div
-          layoutId="login"
           className="login-card"
         >
           <img src={borderImg} alt="" className="login-card-border login-card-border-left" />

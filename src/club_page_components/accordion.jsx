@@ -57,7 +57,7 @@ export default function ModuleAccordion({
     <>
       <p className="about-edit-help">
         Your club page is built from modules. Each section below is a part of what users see
-        when they visit your page. Drag the handle to reorder, use the checkbox to show or hide a section, and click an accordionto expand and edit it. Modules labeled "recommended" will increase viewership and participation.
+        when they visit your page. Drag the handle to reorder, use the checkbox to show or hide a section, and click an accordionto expand and edit it. 
       </p>
       <div className="accordion">
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

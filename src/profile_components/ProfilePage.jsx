@@ -55,6 +55,7 @@ export const ProfilePage = () => {
   const [interestsOpen, setInterestsOpen] = useState(false);
 
   const lastPath = useGlobalStore((state) => state.lastPath);
+  const setSupportOpen = useGlobalStore((state) => state.setSupportOpen);
 
   useEffect(() => {
     const handleBack = () => {
@@ -147,17 +148,17 @@ export const ProfilePage = () => {
   if (loading) {
     return (
       <SkeletonRegion className="ProfilePage" label="Loading your profile">
-        <div className='spacer' />
         <div className='profile-header'>
           <SkeletonCircle size={140} />
           <div className="profile-copy">
             <Skeleton width="240px" height="2.2rem" />
-            <Skeleton width="70%" height="1rem" style={{ marginTop: 10 }} />
-            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-              <Skeleton width="130px" height="2.1rem" radius={999} />
-              <Skeleton width="100px" height="2.1rem" radius={999} />
-            </div>
+            <Skeleton width="70%" height="1.1rem" style={{ marginTop: 10 }} />
           </div>
+        </div>
+        <hr className="profile-divider" />
+        <div style={{ display: 'flex', gap: 10, padding: '12px 0 21px' }}>
+          <Skeleton width="130px" height="2.1rem" radius={999} />
+          <Skeleton width="100px" height="2.1rem" radius={999} />
         </div>
         <hr className="profile-divider" />
         <div className="profile-section">
@@ -170,7 +171,6 @@ export const ProfilePage = () => {
   return (
       <div className="ProfilePage">
         {interestsOpen && <InterestsModal onClose={() => setInterestsOpen(false)} />}
-        <div className='spacer' />
         <div className='profile-header'>
           <div className="avatar-upload-wrap">
             <label htmlFor="avatar-upload" className="profile-photo-btn">
@@ -190,44 +190,6 @@ export const ProfilePage = () => {
           <div className="profile-copy">
             <h1 className='ProfileName'>Hello, {profile?.username}</h1>
             <p className="user-description">{profileDescription}</p>
-            <div className="profile-btn-row">
-              <div className="profile-btn-row-inner">
-                <div className="duo-btn-wrap">
-                  <div className="duo-btn-pill" aria-hidden="true" />
-                  <button
-                    type="button"
-                    className="profile-setup-btn duo-btn profile-duo-btn--interests"
-                    style={{ '--duo-shadow': 'rgb(76, 102, 57)' }}
-                    onClick={() => setInterestsOpen(true)}
-                  >
-                    My Interests
-                  </button>
-                </div>
-                {user && (
-                  <div className="duo-btn-wrap">
-                    <div className="duo-btn-pill" aria-hidden="true" />
-                    <Logout className="duo-btn profile-duo-btn--logout" style={{ '--duo-shadow': 'rgb(122, 48, 47)' }} />
-                  </div>
-                )}
-                {user && (
-                  <div className="duo-btn-wrap">
-                    <div className="duo-btn-pill" aria-hidden="true" />
-                    <NotificationBell className="duo-btn profile-duo-btn--notif" style={{ '--duo-shadow': 'rgb(49, 90, 116)' }} />
-                  </div>
-                )}
-                <div className="duo-btn-wrap">
-                  <div className="duo-btn-pill" aria-hidden="true" />
-                  <button
-                    type="button"
-                    className="profile-setup-btn duo-btn profile-duo-btn--settings"
-                    style={{ '--duo-shadow': 'rgb(0, 0, 0)' }}
-                    onClick={() => navigate('/settings')}
-                  >
-                    Settings
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
           <button
             className="profile-close-btn"
@@ -238,19 +200,80 @@ export const ProfilePage = () => {
           </button>
         </div>
         <hr className="profile-divider" />
+        <div className="profile-btn-row">
+          <div className="profile-btn-row-inner">
+            <div className="duo-btn-wrap">
+              <div className="duo-btn-pill" aria-hidden="true" />
+              <button
+                type="button"
+                className="profile-setup-btn duo-btn profile-duo-btn--interests"
+                style={{ '--duo-shadow': 'rgb(76, 102, 57)' }}
+                onClick={() => setInterestsOpen(true)}
+              >
+                My Interests
+              </button>
+            </div>
+            {user && (
+              <div className="duo-btn-wrap">
+                <div className="duo-btn-pill" aria-hidden="true" />
+                <Logout className="duo-btn profile-duo-btn--logout" style={{ '--duo-shadow': 'rgb(122, 48, 47)' }} />
+              </div>
+            )}
+            {user && (
+              <div className="duo-btn-wrap">
+                <div className="duo-btn-pill" aria-hidden="true" />
+                <NotificationBell className="duo-btn profile-duo-btn--notif" style={{ '--duo-shadow': 'rgb(49, 90, 116)' }} />
+              </div>
+            )}
+            <div className="duo-btn-wrap">
+              <div className="duo-btn-pill" aria-hidden="true" />
+              <button
+                type="button"
+                className="profile-setup-btn duo-btn profile-duo-btn--settings"
+                style={{ '--duo-shadow': 'rgb(0, 0, 0)' }}
+                onClick={() => navigate('/settings')}
+              >
+                Settings
+              </button>
+            </div>
+            {user && (
+              <div className="duo-btn-wrap">
+                <div className="duo-btn-pill" aria-hidden="true" />
+                <button
+                  type="button"
+                  className="profile-setup-btn duo-btn profile-duo-btn--support"
+                  style={{ '--duo-shadow': 'rgb(184, 174, 150)' }}
+                  onClick={() => setSupportOpen(true)}
+                  aria-label="Open support"
+                >
+                  ?
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        <hr className="profile-divider" />
         {user && (
           <>
+            {/* Own profile always shows all three sections, even empty — a friend's
+                profile (FriendProfile.jsx) is the one that hides empty sections
+                entirely, since there's nothing actionable to show a visitor there. */}
             <div className="profile-section">
-              {profile?.photos?.length > 0 && (
-                <div className="profile-section">
-                  <h2 className="divider-header">Your Photos</h2>
-                  <PolaroidCards photos={profile.photos} />
-                </div>
+              <h2 className="divider-header">Your Photos</h2>
+              {profile?.photos?.length > 0 ? (
+                <PolaroidCards photos={profile.photos} />
+              ) : (
+                <p className="profile-empty-hint">You have no photos yet.</p>
               )}
+            </div>
+            <hr className="profile-divider" />
+
+            <div className="profile-section">
               <h2 className="divider-header">Clubs You've Joined</h2>
               <ClubMembershipPanel userId={user.id} />
             </div>
-           
+            <hr className="profile-divider" />
+
             <div className="profile-section">
               <h2 className="divider-header">Friends</h2>
               <FriendDiscoveryList userId={user.id} />

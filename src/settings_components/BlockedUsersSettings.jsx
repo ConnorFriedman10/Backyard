@@ -50,8 +50,6 @@ export const BlockedUsersSettings = () => {
 
     return (
         <section className="settings-section">
-            <h2 className="profile-divider-header">Blocked users</h2>
-
             {loading && (
                 <SkeletonRegion label="Loading blocked users">
                     <ul className="settings-blocked-list">

@@ -28,8 +28,8 @@ const MAX_SCALE = 3;
  * snap-back when you pan/zoom past the image's edges — all via Pointer
  * Events + CSS transitions, no gesture library needed.
  */
-export default function ImageScaleCropModal({ file, onCancel, onConfirm }) {
-    const [aspectKey, setAspectKey] = useState('square');
+export default function ImageScaleCropModal({ file, onCancel, onConfirm, fixedAspect }) {
+    const [aspectKey, setAspectKey] = useState(fixedAspect || 'square');
     const [scale, setScale] = useState(1);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [imgUrl, setImgUrl] = useState('');
@@ -234,18 +234,20 @@ export default function ImageScaleCropModal({ file, onCancel, onConfirm }) {
                     </div>
                 </div>
 
-                <div className="crop-aspect-row">
-                    {Object.entries(ASPECTS).map(([key, a]) => (
-                        <button
-                            key={key}
-                            type="button"
-                            className={`crop-aspect-btn${aspectKey === key ? ' active' : ''}`}
-                            onClick={() => setAspectKey(key)}
-                        >
-                            {a.label}
-                        </button>
-                    ))}
-                </div>
+                {!fixedAspect && (
+                    <div className="crop-aspect-row">
+                        {Object.entries(ASPECTS).map(([key, a]) => (
+                            <button
+                                key={key}
+                                type="button"
+                                className={`crop-aspect-btn${aspectKey === key ? ' active' : ''}`}
+                                onClick={() => setAspectKey(key)}
+                            >
+                                {a.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 <input
                     type="range"

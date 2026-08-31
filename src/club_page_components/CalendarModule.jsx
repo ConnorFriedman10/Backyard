@@ -4,6 +4,7 @@ import borderImg from '../assets/border.svg';
 import borderHorizontalImg from '../assets/border-horizontal.svg';
 import { CalendarExportRow } from './CalendarExportRow';
 import { useClubData } from '../context/useClubData';
+import FriendRsvpCallout from '../components/FriendRsvpCallout';
 import './CalendarModule.css';
 
 /**
@@ -113,13 +114,7 @@ export function CalendarModule({
                   {event.is_members_only && (
                     <span className="cal-members-badge">Members only</span>
                   )}
-                  {friends && friends.length > 0 && (
-                    <p className="friend-rsvp-callout">
-                      {friends.length === 1
-                        ? `${friends[0].username} is going`
-                        : `${friends[0].username} and ${friends.length - 1} ${friends.length - 1 === 1 ? 'other' : 'others'} you know are going`}
-                    </p>
-                  )}
+                  <FriendRsvpCallout friends={friends} />
                   {userId && (
                     <button
                       className={`rsvp-button${isGoing ? ' rsvp-going' : ''}`}
@@ -182,13 +177,7 @@ export function CalendarModule({
                       {ev.is_members_only && (
                         <span className="cal-members-badge">Members only</span>
                       )}
-                      {evFriends && evFriends.length > 0 && (
-                        <p className="friend-rsvp-callout">
-                          {evFriends.length === 1
-                            ? `${evFriends[0].username} is going`
-                            : `${evFriends[0].username} and ${evFriends.length - 1} ${evFriends.length - 1 === 1 ? 'other' : 'others'} you know are going`}
-                        </p>
-                      )}
+                      <FriendRsvpCallout friends={evFriends} />
                       {userId && (
                         <button
                           className={`rsvp-button${evIsGoing ? ' rsvp-going' : ''}`}

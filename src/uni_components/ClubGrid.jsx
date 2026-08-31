@@ -18,7 +18,7 @@ const ClubGridCard = ({ result, onExpand, hideHeart, hidePins, showBorder, isMod
   const [favError, setFavError] = useState(null);
   const GlobalValue = useGlobalStore((state) => state.GlobalValue);
 
-  const { favoritesCache, invalidateFavoritesCache, friendMembershipMap } = useClubData();
+  const { favoritesCache, invalidateFavoritesCache, friendMembershipMap, categoryNameById, subcategoryNameById } = useClubData();
 
   // Whether this card is favorited. Derived straight from the shared cache — it used to be
   // a `let` that the click handler reassigned during render, which React never observes,
@@ -26,6 +26,14 @@ const ClubGridCard = ({ result, onExpand, hideHeart, hidePins, showBorder, isMod
   const liked = favoritesCache?.has(result.id) ?? false;
 
   const friendsInClub = friendMembershipMap?.get(result.id) || [];
+
+  // The media row (friend avatars / mod badge) only renders when there's something to
+  // put in it — the favorite heart falls back to sitting next to the name otherwise.
+  const hasMediaRow = isModerator || (GlobalValue && friendsInClub.length > 0);
+  const showHeart = !hideHeart && GlobalValue;
+
+  const categoryName = categoryNameById?.get(result.category_id);
+  const subcategoryName = subcategoryNameById?.get(result.subcategory_ids?.[0]);
 
   const handleHeartClick = async (e) => {
     e.stopPropagation();
@@ -65,12 +73,6 @@ const ClubGridCard = ({ result, onExpand, hideHeart, hidePins, showBorder, isMod
   // the touch fallback, and still buys the ~100ms between finger-down and click.
   // prefetchClubPage dedupes, so firing from both is free.
   const warm = () => prefetchClubPage(result.id);
-  const truncate = (text, wordLimit = 5) => {
-    if (!text) return "";
-    const words = String(text).split(/\s+/).filter(Boolean);
-    if (words.length <= wordLimit) return String(text);
-    return words.slice(0, wordLimit).join(" ") + "...";
-  };
 
   // No layoutId on the card: it paired this element with the expanded tile as a
   // shared-element morph, and framer-motion interpolating between a small square card and
@@ -106,16 +108,13 @@ const ClubGridCard = ({ result, onExpand, hideHeart, hidePins, showBorder, isMod
       )}
       <div className = "flex-card">
         <div className = "image-container">
-        <img className = "club-img" src={result.image_url || "/raccoon_pfp.png"}/>
-        {!hideHeart && GlobalValue ? <img
-          className = {`heart-btn ${animating ? 'pop' : ''}`}
-          src = {liked ? heartFull : heartEmpty}
-          onClick = {handleHeartClick}
-        /> : null}
+        <div className="club-img-crop">
+          <img className = "club-img" src={result.image_url || "/raccoon_pfp.png"}/>
+        </div>
         </div>
         {favError && <div className="club-fav-error">{favError}</div>}
-        {(isModerator || (GlobalValue && friendsInClub.length > 0)) && (
-          <div className="friend-avatars">
+        {hasMediaRow && (
+          <div className="club-card-media-row">
             <div className="friend-avatars-left">
               {GlobalValue && friendsInClub.slice(0, 3).map((friend) => (
                 <Avatar
@@ -133,14 +132,35 @@ const ClubGridCard = ({ result, onExpand, hideHeart, hidePins, showBorder, isMod
                 </span>
               )}
             </div>
-            {isModerator && <span className="mod-badge">MOD</span>}
+            <div className="club-card-media-row-right">
+              {isModerator && <span className="mod-badge">MOD</span>}
+              {showHeart && (
+                <img
+                  className = {`heart-btn ${animating ? 'pop' : ''}`}
+                  src = {liked ? heartFull : heartEmpty}
+                  onClick = {handleHeartClick}
+                />
+              )}
+            </div>
           </div>
         )}
-        <div className = "club-name"> 
-          {truncate(result.club_name)}
+        <div className="club-name-row">
+          <div className = "club-name">
+            {result.club_name}
+          </div>
+          {!hasMediaRow && showHeart && (
+            <img
+              className = {`heart-btn ${animating ? 'pop' : ''}`}
+              src = {liked ? heartFull : heartEmpty}
+              onClick = {handleHeartClick}
+            />
+          )}
         </div>
-        <div className = "club-info">
-        </div>
+        {categoryName && (
+          <div className="club-tagline">
+            {subcategoryName ? `${categoryName} · ${subcategoryName}` : categoryName}
+          </div>
+        )}
       </div>
     </motion.button>
 );

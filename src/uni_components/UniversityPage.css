@@ -26,7 +26,9 @@
   width: 165px;
   height: auto;
   object-fit: cover;
-  z-index: 15;
+  /* Above .club-card (z-index: 100, ClubGrid.css) so the plant decoration stays
+     on top of scrolling club cards rather than being covered by them. */
+  z-index: 150;
   pointer-events: none;
   opacity: 0.98;
   transform: scaleX(-1);
@@ -130,7 +132,12 @@
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 3rem 0 2rem 0;
+  /* Horizontal padding matches .uni-search-row's 1rem: --uni-content-width is a
+     percentage, so it only resolves to the same pixel width in both places if the
+     two rows' content boxes (outer width minus padding) actually match — otherwise
+     .clubs-list's "98% of the shell" cap silently drifts off by however much the
+     padding amounts differ. */
+  padding: 3rem 1rem 2rem 1rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -284,10 +291,52 @@
 
   .uni-calendar-inline {
     top: 11vh;
-    bottom: 10%;
-    width: 90%;
+    bottom: 7%;
+    width: 91%;
   }
 
+}
+
+/* ── New search bar (<=700px) ─────────────────────────────────────────────
+   The two-row, auto-growing search bar (UniSearchBar.css) needs its own,
+   wider breakpoint than the rest of this mobile header/layout block above —
+   placed after it so it wins the cascade at every width it applies to,
+   including the ≤500px range the block above also covers. */
+@media (max-width: 700px) {
+  /* The middle row can grow taller than 6vh now (the search bar wraps and grows
+     with a long query — see UniSearchBar.css), so it needs to grow with it
+     instead of clipping/overlapping the club grid below. minmax keeps the 6vh
+     floor for a short query, and 1fr lets the club-stage row absorb whatever's
+     left rather than assuming a fixed height, so posters always start right
+     where the search bar actually ends and scroll underneath it.
+     height (not just min-height): 1fr only reliably means "whatever's left" when
+     the grid container's own height is definite — against a min-height alone (an
+     indefinite constraint), the browser instead sizes 1fr to fit all of row 3's
+     content unclamped, which is what was actually causing the "sticky doesn't
+     stick" bug: the club grid was never being clipped/scrolled internally by
+     .uni-club-viewport at all — it was inflating .uni-layout to the height of
+     every card (tens of thousands of px), so the whole *document* scrolled
+     instead, and position:sticky only tracks scroll within .uni-layout/.UniPage
+     (nearest ancestor with non-visible overflow), which itself never moved. */
+  .uni-layout {
+    height: 100vh;
+    grid-template-rows: 11vh minmax(6vh, auto) 1fr;
+  }
+
+  /* Sticky (like .uni-plant-layer, which is already position:fixed) so the flag
+     and search bar stay put above the club grid rather than scrolling away with
+     it. z-index sits between the plant (150) and .club-card (100, ClubGrid.css). */
+  .uni-header-spacer {
+    position: sticky;
+    top: 0;
+    z-index: 120;
+  }
+
+  .uni-search-row {
+    position: sticky;
+    top: 11vh;
+    z-index: 120;
+  }
 }
 
 @media (max-width: 399px) {

@@ -141,7 +141,7 @@
   position: fixed;
   top: 32px;
   right: 32px;
-  background: none;
+  background: rgb(234, 234, 230);
   border: none;
   cursor: pointer;
   font-size: 2rem;
@@ -159,6 +159,7 @@
   z-index: auto;
   margin-left: auto;
   flex-shrink: 0;
+  background: rgb(234, 234, 230);
 }
 
 .review-btn {
@@ -293,13 +294,31 @@
 }
 
 .module-view-divider {
-  width: 100%;
+  width: 95%;
+  margin: 0 auto;
   box-sizing: border-box;
   padding: 10px 0;
 }
 
 .module-view-divider .divider {
   margin-top: 0;
+}
+
+/* Mobile: line fills its (95%-wide, centered) .module-view-divider container. */
+@media (max-width: 500px) {
+  .module-view-divider .divider {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* >500px: full-bleed to match .rectangle's own width/offset (BasicInfoModule.css),
+   instead of the container's 95%-centered width. */
+@media (min-width: 501px) {
+  .module-view-divider .divider {
+    width: 99vw;
+    margin-left: -1%;
+  }
 }
 
 .divider {
@@ -320,6 +339,17 @@
   color: #37291E;
   text-align: left;
   margin-bottom: 15px;
+  align-self: flex-start;
+}
+
+/* >500px: match .rectangle's width/offset (BasicInfoModule.css) so the header
+   spans the same full-bleed box as the pink rectangle above it. */
+@media (min-width: 501px) {
+  .divider-header {
+    width: 99vw;
+    margin-left: 0;
+    box-sizing: border-box;
+  }
 }
 
 @keyframes review-pop {
@@ -342,10 +372,7 @@
     width: 100%;
   }
 
-  .view-reviews,
-  
-
-  .divider {
+  .view-reviews {
     width: 88vw;
     margin-left: -1%;
   }
@@ -367,14 +394,6 @@
   .expanded-card::before {
     width: 100vw;
     height: 100vh;
-  }
-
-
- 
-
-  .divider {
-    width: 97vw;
-    margin-left: 1.5%;
   }
 }
 

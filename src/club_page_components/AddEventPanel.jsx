@@ -8,10 +8,18 @@ import borderImg from '../assets/border.svg';
 import borderHorizontalImg from '../assets/border-horizontal.svg';
 import EventPosterCropModal from './EventPosterCropModal';
 import PortraitTitle from '../uni_components/PortraitTitle';
+import FriendRsvpCallout from '../components/FriendRsvpCallout';
 import '../uni_components/EventInfoRow.css';
 import './AddEventPanel.css';
 
 const EMPTY_FORM = { eventName: '', start: '', end: '', where: '', description: '', membersOnly: false };
+
+// Cropping (EventPosterCropModal) re-compresses to JPEG at 0.92 quality, which would
+// bring nearly any phone photo under this — but cropping is optional here, so an
+// uncropped raw camera photo (easily 8-10MB+ on a modern phone) can go straight to
+// the PUT and get rejected by the bucket's own size limit with a bare "upload failed".
+// This catches it up front with an actionable message instead.
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 // datetime-local inputs need "YYYY-MM-DDTHH:mm" (no seconds/timezone)
 function toDatetimeLocalValue(iso) {
@@ -135,6 +143,11 @@ export default function AddEventPanel({
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Not rejected here even if oversized: Scale/Crop (still reachable below, since it
+    // only needs imageFile set) re-compresses to JPEG and usually brings a raw phone
+    // photo well under the limit. The real gate is in handleSubmit, after cropping has
+    // had its chance.
+    setFormWarning('');
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
@@ -179,6 +192,14 @@ export default function AddEventPanel({
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+    // Checked here rather than at file-select: cropping (optional, via Scale/Crop)
+    // re-compresses to JPEG and usually shrinks a raw phone photo well under this —
+    // by submit time that's already happened if it was going to. Without this check,
+    // an oversized file reaches the PUT and comes back as a bare "Image upload failed."
+    if (imageFile && imageFile.size > MAX_IMAGE_BYTES) {
+      setFormWarning('That image is too large. Use Scale/Crop to shrink it before sending.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       let imageUrl = null;
@@ -186,7 +207,7 @@ export default function AddEventPanel({
         const ext = imageFile.name.split('.').pop() || 'jpg';
         const { signedUrl, publicUrl } = await apiFetch('/storage/event-poster-upload-url', {
           method: 'POST',
-          body: { ext },
+          body: { ext, club_id: club.id },
         });
         const uploadRes = await fetch(signedUrl, {
           method: 'PUT',
@@ -505,13 +526,7 @@ export default function AddEventPanel({
                       {event.is_members_only && (
                         <span className="cal-members-badge">Members only</span>
                       )}
-                      {friends && friends.length > 0 && (
-                        <p className="friend-rsvp-callout">
-                          {friends.length === 1
-                            ? `${friends[0].username} is going`
-                            : `${friends[0].username} and ${friends.length - 1} ${friends.length - 1 === 1 ? 'other' : 'others'} you know are going`}
-                        </p>
-                      )}
+                      <FriendRsvpCallout friends={friends} />
                       {userId && (
                         <button
                           className={`rsvp-button${isGoing ? ' rsvp-going' : ''}`}

@@ -4,18 +4,276 @@
    Reuses the existing .ProfilePage shell and the setup-* field classes, so restyling
    those fields in one place covers onboarding and settings together. */
 
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #f9f9f9;
+  overflow-y: auto;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
 .settings-page {
   padding-bottom: 96px;
 }
 
-.settings-section {
-  margin: 28px 0;
-  padding-bottom: 24px;
-  border-bottom: 1px solid rgba(41, 36, 29, 0.12);
+/* Heading + tabs, styled to match SupportModal's .support-heading / .support-tab. */
+.settings-heading {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(2.8rem, 7vw, 4rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #494949;
+  margin: 0;
 }
 
-.settings-section:last-child {
-  border-bottom: none;
+.settings-divider {
+  width: 100%;
+  height: 2px;
+  background-image: url('/src/assets/border-horizontal-gray.svg');
+  background-repeat: repeat-x;
+  background-position: left center;
+  background-size: auto 100%;
+  margin: 0 0 1.25rem;
+}
+
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.settings-tab {
+  flex: 0 0 auto;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: #cdcdcd;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.settings-tab:hover {
+  color: #8c8c8c;
+}
+
+.settings-tab--active,
+.settings-tab--active:hover {
+  color: #1a1a1a;
+}
+
+.settings-content {
+  flex: 1;
+  width: 100%;
+}
+
+/* Each tab shows exactly one section, so the old stacked-sections border/margin
+   (meant to separate section N from N+1) would just float around a single block
+   with nothing left to separate. */
+.settings-section {
+  margin: 0;
+}
+
+/* Avatar upload is a real button in disguise — give it the same on-press feedback as
+   settings-save/etc. Scoped to settings so onboarding's avatar picker is untouched.
+   position: relative so the "Change" overlay below can center over the image.
+   align-self: flex-start keeps it from being stretched to the full width of
+   .settings-form (a flex column, which stretches children across the cross axis by
+   default) — without this the label's box (and so the overlay's inset:0) was the whole
+   form's width, not the small circle, which is why "Change" rendered off to one side
+   instead of centered on the avatar. */
+.settings-content .setup-avatar-label {
+  position: relative;
+  display: inline-block;
+  align-self: flex-start;
+  margin-bottom: 12px;
+  transition: transform 100ms ease-out;
+}
+
+.settings-content .setup-avatar-label:active {
+  transform: scale(0.96);
+}
+
+/* Settings-only avatar size — onboarding's 196px hero photo (with its own 164px mobile
+   breakpoint) is too tall for a field sitting inline with the rest of a dense form, so
+   this shrinks it to roughly a text-input row's height, scaling with viewport width
+   (~6.5rem around 800px) rather than sitting at one fixed size. Compound selector
+   (not just .settings-avatar) so it outranks onboarding's .setup-avatar media query
+   regardless of stylesheet import order.
+
+   Its border relies on --setup-line, a custom property defined only on
+   .profile-setup-page (onboarding's wrapper) — Settings has no ancestor with that class,
+   so the var() reference is invalid there and the whole `border` shorthand it's part of
+   silently drops. Declared explicitly here with the same color instead of depending on it. */
+.setup-avatar.settings-avatar {
+  width: clamp(4rem, 5.5rem + 2vw, 7rem);
+  height: clamp(4rem, 5.5rem + 2vw, 7rem);
+  border: 2px solid #2f2a22;
+}
+
+.settings-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.settings-avatar-scale-row {
+  display: flex;
+  justify-content: center;
+  width: clamp(4rem, 5.5rem + 2vw, 7rem);
+  margin-bottom: 12px;
+}
+
+/* cal-image-scale-btn (AddEventPanel.css) is styled light-on-dark for the poster tile's
+   dark card background — Settings is light, so recolor it here rather than fork a
+   parallel class. Only the scale button is reused; remove is its own red "X" below
+   (settings-photo-remove), not the toolbar's text button. */
+.settings-content .cal-image-scale-btn {
+  border-color: #2f2a22;
+  color: #2f2a22;
+  font-size: 0.7rem;
+  padding: 6px 6px;
+}
+
+.settings-content .cal-image-scale-btn:hover {
+  background: rgba(47, 42, 34, 0.08);
+}
+
+/* One toolbar per gallery photo, sitting above its own tile (not overlaid, so it never
+   swallows a click meant for the image) — same reasoning as the calendar poster's
+   toolbar this borrows from. Right-aligned and shrunk down to sit right above the "X"
+   below it, with just a few px of gap, rather than a full centered row. Two-class
+   selector so it outranks .cal-image-toolbar's own justify-content regardless of which
+   stylesheet the bundler orders first. */
+.settings-content .setup-photo-toolbar {
+  margin-bottom: 4px;
+  justify-content: flex-end;
+}
+
+.settings-content .setup-photo-toolbar .cal-image-scale-btn {
+  font-size: 0.7rem;
+  padding: 5px 10px;
+}
+
+/* Bigger gallery thumbnails than onboarding's fixed 96px minimum, scaling with viewport
+   instead of sitting at one size. Scoped so onboarding's grid is untouched. */
+.settings-content .setup-photo-previews {
+  grid-template-columns: repeat(auto-fill, clamp(110px, 20vw, 170px));
+}
+
+/* Top-right "X" — no fixed width/padding, just the glyph itself so it can never render
+   wider than the tile it sits on. Solid red background, white glyph. */
+.settings-photo-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  background: rgba(180, 40, 40);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 7px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.1s ease-in;
+}
+
+.settings-photo-remove:hover {
+  transform: scale(1.15);
+  background: rgba(150, 30, 30);
+}
+
+/* Blue duo-btn trigger for the hidden multi-photo file input, placed below the gallery
+   grid per request. Disabled state can't use the `disabled` attribute (it's a <label>,
+   not a <button>) — the underlying hidden input is disabled instead, which already stops
+   the label click from opening a file dialog; this just adds the matching visual cue. */
+.settings-add-photo-wrap {
+  align-self: flex-start;
+  margin-bottom: 5px;
+}
+
+.settings-add-photo-btn {
+  display: inline-block;
+  background: #2e78a8;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Wider than duo-btn's default 10px side padding — a bare "+" glyph needs more
+   breathing room than a word did, or it reads as cramped. Doubled-up selector to
+   outrank duo-btn's own !important padding in index.css. */
+.duo-btn.settings-add-photo-btn {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+.settings-add-photo-btn--disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The onboarding flow's field labels (setup-field-label) are sized for a full-screen,
+   one-field-at-a-time form — here they sit directly above a value in a dense list of
+   fields. Matched to .settings-radio-question's full treatment (weight, size, tracking,
+   uppercase, color) so both read as the same tier of heading.
+   Scoped to settings so onboarding is untouched. */
+.settings-content .setup-field-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #494949;
+  margin-top: 0;
+}
+
+/* setup-school-input/setup-bio/avatar-initials/username-availability come from the
+   shared onboarding stylesheets in Be Vietnam Pro or the site-wide Barlow default —
+   scoped here so Settings reads as one typeface without touching onboarding.
+
+   Their border also relies on --setup-line (see .settings-avatar above for why that's
+   undefined here) — same fix, declared explicitly instead of depending on the variable.
+   Matched to .support-input/.support-select/.support-textarea's 1px gray treatment
+   rather than onboarding's heavier 3px, since Settings is a dense form, not a hero page. */
+.settings-content .setup-school-input,
+.settings-content .setup-bio {
+  font-family: 'Barlow Condensed', sans-serif;
+  border: 1px solid #c8c8c8;
+}
+
+.settings-content .setup-school-input:focus,
+.settings-content .setup-bio:focus {
+  border-color: #494949;
+}
+
+.settings-content .setup-username-ok,
+.settings-content .setup-username-taken {
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+.settings-content .avatar.avatar-initials {
+  font-family: 'Barlow Condensed', sans-serif;
 }
 
 .settings-form {
@@ -27,7 +285,7 @@
 
 .settings-status,
 .settings-hint {
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.9rem;
   color: #6b6257;
   margin: 4px 0;
@@ -35,14 +293,14 @@
 }
 
 .settings-error {
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.9rem;
   color: #8a3b2f;
   margin: 8px 0 0;
 }
 
 .settings-warning {
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.9rem;
   color: #8a5a2f;
   background: rgba(138, 90, 47, 0.08);
@@ -50,13 +308,6 @@
   padding: 10px 12px;
   margin: 12px 0;
   max-width: 520px;
-}
-
-.settings-saved {
-  font-family: 'Barlow Condensed', sans-serif;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  color: #3f7a4f;
 }
 
 .settings-actions {
@@ -81,6 +332,7 @@
   cursor: pointer;
   background: transparent;
   color: #2f2a22;
+  transition: transform 100ms ease-out;
 }
 
 .settings-save {
@@ -88,12 +340,62 @@
   color: #f5f1ea;
 }
 
-.settings-save:disabled,
+/* The button itself becomes the "saved" confirmation (green, relabeled) instead of a
+   separate span next to it — still announces itself on arrival rather than silently
+   swapping color, just via the button's own transform instead of a sibling element's. */
+.settings-save.settings-save--saved {
+  background: #2f7a3f;
+  border-color: #2f7a3f;
+  animation: settings-save-saved-in 200ms ease-out both;
+}
+
+@keyframes settings-save-saved-in {
+  from { transform: scale(0.94); }
+  to { transform: scale(1); }
+}
+
+/* Feedback on press, not on release — waiting for the click to complete before showing
+   anything reads as dead. Transform-only so it stays cheap and interruptible.
+   :not(.duo-btn) so a duo-btn's own translateY press (index.css) isn't fought for
+   the same property by this more specific selector. */
+.settings-save:active:not(:disabled):not(.duo-btn),
+.settings-secondary:active:not(:disabled):not(.duo-btn),
+.settings-danger-btn:active:not(:disabled):not(.duo-btn),
+.settings-unblock:active:not(:disabled):not(.duo-btn) {
+  transform: scale(0.96);
+}
+
+/* :not(.settings-save--saved) on the first one — "Update password" is disabled once its
+   fields are cleared after a successful save, but that's not the same as inactive/greyed
+   out here; it should still read as a clear green confirmation, not a washed-out one. */
+.settings-save:disabled:not(.settings-save--saved),
 .settings-secondary:disabled,
 .settings-danger-btn:disabled,
 .settings-unblock:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* A disabled duo-btn dims itself, but its floating shadow pill is a separate sibling
+   element with no opacity tie to the button — same gap manage-roles-panel__add-btn had,
+   fixed the same way there (ClubMembersPanel.css). Without this, e.g. "Update password"
+   while its fields are empty shows a grayed-out button still sitting on a solid black
+   pill, which reads as active. Same :not() exclusion as above for the saved state. */
+.duo-btn-pill:has(+ .settings-save:disabled:not(.settings-save--saved)),
+.duo-btn-pill:has(+ .settings-secondary:disabled),
+.duo-btn-pill:has(+ .settings-danger-btn:disabled),
+.duo-btn-pill:has(+ .settings-unblock:disabled) {
+  opacity: 0.4;
+}
+
+.settings-radio-question {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #494949;
+  margin: 4px 0 0;
 }
 
 /* Radio + toggle groups */
@@ -115,6 +417,11 @@
   cursor: pointer;
 }
 
+.settings-radio input[type="radio"],
+.settings-toggle input[type="checkbox"] {
+  accent-color: rgb(47, 115, 164);
+}
+
 .settings-radio .settings-hint,
 .settings-toggle .settings-hint {
   grid-column: 2;
@@ -123,8 +430,8 @@
 
 .settings-radio-label,
 .settings-toggle-label {
-  font-family: 'Barlow', sans-serif;
-  font-size: 1rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.05rem;
   color: #29241d;
 }
 
@@ -137,7 +444,7 @@
 }
 
 .settings-readonly-value {
-  font-family: 'Be Vietnam Pro', sans-serif;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.95rem;
   color: #29241d;
 }
@@ -167,42 +474,58 @@
 
 .settings-blocked-name {
   flex: 1;
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Barlow Condensed', sans-serif;
   color: #29241d;
 }
 
-/* Destructive zone — visually separated so it cannot be hit by accident. */
-.settings-danger {
-  margin-top: 32px;
-  padding: 16px;
-  border: 2px solid rgba(138, 59, 47, 0.35);
-  border-radius: 6px;
-  max-width: 520px;
-}
-
-.settings-danger-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  text-transform: uppercase;
-  font-size: 1rem;
-  color: #8a3b2f;
-  margin: 0 0 8px;
-}
-
-.settings-danger-trigger {
-  font-family: 'Barlow Condensed', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 0.9rem;
-  background: none;
-  border: none;
-  border-bottom: 1px solid #8a3b2f;
-  color: #8a3b2f;
-  padding: 2px 0;
-  cursor: pointer;
-}
-
 .settings-danger-btn {
-  background: #8a3b2f;
-  border-color: #8a3b2f;
+  background: #9f0a00;
+  border-color: #9f0a00;
   color: #fff;
+}
+
+/* Same red as the real Logout button (profile-duo-btn--logout in ProfilePage.css). */
+.settings-logout-btn {
+  background: #bc4a49;
+  border-color: #bc4a49;
+  color: #fff;
+}
+
+/* Logout/Delete sit further down from Update password — enough of a gap that they read
+   as a separate, lower-stakes-adjacent-to-danger group rather than a continuation of the
+   password form directly above. */
+.settings-account-actions {
+  margin-top: 40px;
+}
+
+/* Smaller than Logout/Delete below it, so Update password reads as the lesser action on
+   the page rather than competing with them at equal weight. Doubled-up selector (class +
+   .duo-btn) needed to outrank .duo-btn's own !important font-size/padding in index.css. */
+.duo-btn.settings-save--sm {
+  font-size: 0.75rem !important;
+  padding: 4px 12px !important;
+}
+
+/* Reduced motion doesn't mean no feedback, it means dropping the transform/scale and
+   keeping only the opacity change that still communicates what happened. */
+@media (prefers-reduced-motion: reduce) {
+  .settings-save,
+  .settings-secondary,
+  .settings-danger-btn,
+  .settings-unblock,
+  .settings-content .setup-avatar-label {
+    transition: none;
+  }
+
+  .settings-save:active:not(:disabled),
+  .settings-secondary:active:not(:disabled),
+  .settings-danger-btn:active:not(:disabled),
+  .settings-unblock:active:not(:disabled),
+  .settings-content .setup-avatar-label:active {
+    transform: none;
+  }
+
+  .settings-save--saved {
+    animation: none;
+  }
 }

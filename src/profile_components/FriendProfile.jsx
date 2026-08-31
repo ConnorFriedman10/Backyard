@@ -111,7 +111,6 @@ export const FriendProfile = () => {
   if (status === 'loading') {
     return (
       <SkeletonRegion className="ProfilePage" label="Loading profile">
-        <div className="spacer" />
         <div className="profile-header">
           <SkeletonCircle size={140} />
           <div className="profile-copy">
@@ -130,7 +129,6 @@ export const FriendProfile = () => {
   if (status === 'error') {
     return (
       <div className="ProfilePage">
-        <div className="spacer" />
         <button
           className="profile-close-btn"
           onClick={handleClose}
@@ -147,7 +145,6 @@ export const FriendProfile = () => {
 
   return (
     <div className="ProfilePage">
-      <div className="spacer" />
       <div className="profile-header">
         <div className="friend-photo-wrap">
           <Avatar
@@ -169,21 +166,6 @@ export const FriendProfile = () => {
         </button>
       </div>
       <hr className="profile-divider" />
-
-      <div className="profile-section">
-        <h2 className="profile-divider-header">Photos</h2>
-        <PolaroidCards photos={profile?.photos || []} />
-      </div>
-
-      <div className="profile-section">
-        <h2 className="profile-divider-header">Clubs Joined</h2>
-        <ClubMembershipPanel memberList={profile?.member_list || []} readOnly />
-      </div>
-
-      <div className="profile-section">
-        <h2 className="profile-divider-header">Mutual Friends</h2>
-        <MutualFriendsList friends={profile?.mutual_friends || []} viewerId={viewerId} />
-      </div>
 
       <div className="profile-section friend-block-section">
         {confirmingBlock ? (
@@ -213,25 +195,53 @@ export const FriendProfile = () => {
             {blockError && <p className="friend-block-error">{blockError}</p>}
           </div>
         ) : (
-          <button
-            type="button"
-            className="friend-block-trigger"
-            onClick={() => setConfirmingBlock(true)}
-          >
-            Block user
-          </button>
+          <div className="duo-btn-wrap">
+            <div className="duo-btn-pill" aria-hidden="true" />
+            <button
+              type="button"
+              className="friend-block-trigger duo-btn"
+              style={{ '--duo-shadow': 'rgb(110, 12, 8)' }}
+              onClick={() => setConfirmingBlock(true)}
+            >
+              Block user
+            </button>
+          </div>
         )}
       </div>
+      <hr className="profile-divider" />
+
+      {/* A visitor can't act on "no clubs joined" or "no mutual friends" the way the
+          profile's owner can, so each section only appears when there's actually
+          something to show — unlike ProfilePage.jsx, which always shows all three
+          with a friendly empty state. */}
+      {profile?.photos?.length > 0 && (
+        <div className="profile-section">
+          <h2 className="profile-divider-header">Photos</h2>
+          <PolaroidCards photos={profile.photos} />
+        </div>
+      )}
+
+      {profile?.member_list?.length > 0 && (
+        <div className="profile-section">
+          <h2 className="profile-divider-header">Clubs Joined</h2>
+          <ClubMembershipPanel memberList={profile.member_list} readOnly />
+        </div>
+      )}
+
+      {profile?.mutual_friends?.length > 0 && (
+        <div className="profile-section">
+          <h2 className="profile-divider-header">Mutual Friends</h2>
+          <MutualFriendsList friends={profile.mutual_friends} viewerId={viewerId} />
+        </div>
+      )}
     </div>
   )
 }
 
+// Only ever rendered by FriendProfile when friends.length > 0 — the empty case is
+// handled by not rendering this section at all.
 const MutualFriendsList = ({ friends, viewerId }) => {
   const navigate = useNavigate()
-
-  if (!friends.length) {
-    return <p className="friends-empty mutual-friends-empty">No mutual friends yet.</p>
-  }
 
   return (
     <div className="friends-panel">

@@ -80,7 +80,7 @@ function JoinModule({ data, editing, onChange, warning }) {
 
       {editing && (
         <p className="about-edit-help">
-          These tabs help potential new members be informed in the joining process. Optional: Enter your application link and your recruiter email.
+          These tabs help potential new members learn about your club's joining process. Optional: Enter your application link and your recruiter email.
         </p>
       )}
       {editing && warning && <p className="module-warning">{warning}</p>}

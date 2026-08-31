@@ -264,8 +264,8 @@
   display: flex;
   justify-content: space-between;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 1.15rem;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #5c5c5c;
@@ -318,21 +318,12 @@
 
 .support-submit-btn {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 1rem;
-  font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 0.5rem 1.2rem;
-  border: 1px solid #7a7a7a;
-  background: #f7f7f7;
-  color: #404040;
+  border: none !important;
+  background-color: #4B8AB3 !important;
+  color: #fff !important;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.support-submit-btn:hover:not(:disabled) {
-  background: #ebebeb;
-  color: #1f1f1f;
 }
 
 .support-submit-btn:disabled {

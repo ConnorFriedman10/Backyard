@@ -15,7 +15,7 @@ export const ClubList = ({ results, cardSize = 'medium' }) => {
 
   return (
     <>
-      {/* data-size drives --card-scale and the column count; see ClubList.css. */}
+      {/* data-size drives --card-min-width, which drives the column count; see ClubList.css. */}
       <div className="clubs-list" data-size={cardSize}>
         {results.map((club) => (
           <ClubGrid

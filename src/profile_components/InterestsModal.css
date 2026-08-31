@@ -6,13 +6,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.65);
 }
 
 /* ── Modal card ── */
 .interests-modal {
+  position: relative;
   background: #fff;
-  border-radius: 18px;
+  /* border-radius: 18px; */
   width: 520px;
   max-width: 94vw;
   max-height: 88vh;
@@ -22,26 +23,47 @@
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
 }
 
+.interests-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.19'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+@media (max-width: 500px) {
+  .interests-modal {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
 /* ── Header ── */
 .interests-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 24px 24px 0;
+  padding: 24px 24px 0.75rem;
   flex-shrink: 0;
+  background-image: url('/src/assets/border-horizontal-gray.svg');
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  background-size: auto 2px;
 }
 
 .interests-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(2.8rem, 7vw, 4rem);
   font-weight: 400;
-  letter-spacing: 0.05em;
-  color: #1a1a1a;
+  letter-spacing: 0.04em;
+  color: #494949;
   margin: 0 0 2px;
 }
 
 .interests-subtitle {
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.85rem;
   color: #666;
   margin: 0;
@@ -72,10 +94,11 @@
 
 .interests-count {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.9rem;
+  font-size: 1.25rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #888;
+  color: #29241d;
 }
 
 /* ── Scrollable body ── */
@@ -119,7 +142,7 @@
   font-size: 1rem;
   letter-spacing: 0.03em;
   padding: 7px 16px;
-  border-radius: 9999px;
+  border-radius: 10px;
   border: 1.5px solid #c8c8c8;
   background: #fff;
   color: #333;
@@ -130,9 +153,10 @@
   text-align: left;
 }
 
-.interests-pill:hover:not(:disabled) {
-  border-color: #888;
-  color: #111;
+.interests-pill:hover:not(:disabled):not(.interests-pill--selected):not(.interests-pill--disabled):not(.interests-pill--sm) {
+  background: rgba(26, 26, 26, 0.5);
+  border-color: rgba(26, 26, 26, 0.5);
+  color: #fff;
 }
 
 .interests-pill--selected {
@@ -151,10 +175,51 @@
   cursor: not-allowed;
 }
 
+/* Attempting to pick past MAX_CATEGORIES no-ops in JS rather than truly
+   disabling the button (a disabled button can't receive hover/click styling
+   at all) — these give that attempt visible red feedback instead of silently
+   doing nothing. */
+.interests-pill--disabled:hover {
+  background: rgba(220, 53, 47, 0.5);
+  border-color: rgba(220, 53, 47, 0.5);
+  color: #fff;
+  opacity: 1;
+}
+
+.interests-pill--disabled:active {
+  background: #dc352f;
+  border-color: #dc352f;
+  color: #fff;
+  opacity: 1;
+}
+
 /* Subcategory pills are slightly smaller */
 .interests-pill--sm {
   font-size: 0.9rem;
   padding: 5px 13px;
+}
+
+/* --sub-color (set inline in InterestsModal.jsx) is one color per selected
+   category, shared by all of that category's selected subcategory pills —
+   e.g. every selected Greek Life sub pill is the same blue. Unselected pills
+   stay the plain default look; the color only shows up once picked. */
+.interests-pill--sm.interests-pill--selected {
+  background: var(--sub-color);
+  border-color: var(--sub-color);
+  color: #fff;
+}
+
+.interests-pill--sm.interests-pill--selected:hover {
+  opacity: 0.85;
+}
+
+/* Not-yet-selected sub pills preview their category's color on hover, instead
+   of the generic dark overlay every other pill gets. */
+.interests-pill--sm:hover:not(:disabled):not(.interests-pill--selected) {
+  background: var(--sub-color);
+  border-color: var(--sub-color);
+  color: #fff;
+  opacity: 0.4;
 }
 
 /* ── Subcategory area ── */
@@ -180,19 +245,20 @@
 
 .interests-sub-label {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #494949;
+  color: #29241d;
 }
 
 .interests-sub-count {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.8rem;
+  font-size: 1.25rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #aaa;
+  color: #29241d;
 }
 
 /* ── Error ── */

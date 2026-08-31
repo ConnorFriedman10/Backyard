@@ -2,6 +2,7 @@ import express from 'express';
 import { supabaseAdmin } from '../supabaseAdmin.js';
 import nlSearchParser from '../lib/nlSearch.js';
 import { PUBLIC_CLUB_COLUMNS } from '../lib/publicColumns.js';
+import { attachClubInterests } from '../lib/clubInterests.js';
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ router.get('/', async (req, res) => {
           results.sort((a, b) => (keywordMatched.has(b.id) ? 1 : 0) - (keywordMatched.has(a.id) ? 1 : 0));
         }
 
-        return res.json(results);
+        return res.json(await attachClubInterests(supabaseAdmin, results));
       } catch (err) {
         console.error('[nl-search] structured query failed, falling back:', err.message);
       }
@@ -76,7 +77,7 @@ router.get('/', async (req, res) => {
     throw err;
   }
 
-  res.json(data);
+  res.json(await attachClubInterests(supabaseAdmin, data || []));
 });
 
 export default router;
