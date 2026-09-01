@@ -119,7 +119,6 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
     // info from modules data to be displayed from db
     const [pageData, setPageData] = useState(() => warmed?.page ?? null);
     // top tags derived from reviews
-    const [topTags, setTopTags] = useState(() => (warmed?.topTags ?? []).map((r) => r.tag));
     // editing state for changing modules
     const [isEditing, setIsEditing] = useState(false);
     // copy of the pageData.modules array initially so that it can record changes aggregated over all the modules
@@ -154,7 +153,6 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
     const isApproved = myRole === 'moderator' || myRole === 'top_moderator';
     // Deliberately narrower than isApproved: changing who can get in is an ownership
     // decision, so a plain moderator does not get the toggle.
-    const isOwner = myRole === 'top_moderator';
 
     // The membership button used to be a straight isMember ternary. It now has to say
     // whether clicking will join outright or only ask, and offer a way back out of the
@@ -919,12 +917,14 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
             {activeTab === 'members' ? (
                 <ClubMembersPanel
                     clubId={id}
+                    joinPolicy={joinPolicy}
                     myRole={myRole}
                     currentUserId={user?.id ?? null}
                     onMembershipChange={(newRole) => {
                         setMyRole(newRole);
                         if (onMembershipChange) onMembershipChange(club.id, newRole !== null);
                     }}
+                    onJoinPolicyChange={handleJoinPolicyToggle}
                 />
             ) : (
 
