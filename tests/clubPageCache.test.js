@@ -19,12 +19,11 @@ describe('clubPageCache', () => {
 
     it('fetches the page endpoints, including the viewer role', async () => {
         await prefetchClubPage(CLUB);
-        expect(apiFetch).toHaveBeenCalledTimes(6);
+        expect(apiFetch).toHaveBeenCalledTimes(5);
         const paths = apiFetch.mock.calls.map((c) => c[0]);
         expect(paths).toEqual([
             `/clubs/${CLUB}/reviews`,
             `/clubs/${CLUB}/page`,
-            `/clubs/${CLUB}/top-tags`,
             `/clubs/${CLUB}/events/upcoming`,
             `/clubs/${CLUB}/members`,
             // Prefetched despite being user-specific: it decides whether the tile shows an
@@ -54,7 +53,7 @@ describe('clubPageCache', () => {
         const [a, b, c] = await Promise.all([
             prefetchClubPage(CLUB), prefetchClubPage(CLUB), prefetchClubPage(CLUB),
         ]);
-        expect(apiFetch).toHaveBeenCalledTimes(6);
+        expect(apiFetch).toHaveBeenCalledTimes(5);
         expect(a).toBe(b);
         expect(b).toBe(c);
     });
@@ -97,7 +96,7 @@ describe('clubPageCache', () => {
         expect(readClubPage(CLUB)).toBeNull();
         apiFetch.mockClear();
         await prefetchClubPage(CLUB);
-        expect(apiFetch).toHaveBeenCalledTimes(6);
+        expect(apiFetch).toHaveBeenCalledTimes(5);
     });
 
     it('ignores a missing club id', async () => {
