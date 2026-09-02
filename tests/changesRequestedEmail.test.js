@@ -54,3 +54,40 @@ describe('renderChangesRequestedEmail', () => {
         expect(text).not.toContain('<');
     });
 });
+
+// The whole point of the resume link: a club should not have to go hunting through an
+// inbox for a claim link that has probably expired by the time a review comes back.
+describe('renderChangesRequestedEmail resume link', () => {
+    const RESUME = 'https://claim.example.com/resume';
+
+    it('renders a button and the bare URL when a resume link is supplied', () => {
+        const { html, text } = renderChangesRequestedEmail({
+            clubName: 'Chess Club', note, resumeUrl: RESUME,
+        });
+        expect(html).toContain(`href="${RESUME}"`);
+        expect(html).toContain('Open your page');
+        // Shown as text too, for clients that strip the anchor styling.
+        expect(html.split(`href="${RESUME}"`)[1]).toContain(RESUME);
+        expect(text).toContain(RESUME);
+    });
+
+    // ONBOARD_URL is optional and appUrls refuses to invent one, so the sender passes
+    // null rather than a broken origin. Falling back beats shipping a button to nowhere.
+    it('falls back to the old wording when there is no resume link', () => {
+        for (const resumeUrl of [null, undefined, '']) {
+            const { html, text } = renderChangesRequestedEmail({ clubName: 'Chess', note, resumeUrl });
+            expect(html).not.toContain('Open your page');
+            expect(html).not.toContain('href="null"');
+            expect(html).not.toContain('undefined');
+            expect(text).toContain('Open the setup link we sent you');
+        }
+    });
+
+    it('escapes the resume URL rather than interpolating it raw', () => {
+        const { html } = renderChangesRequestedEmail({
+            clubName: 'Chess', note, resumeUrl: 'https://x.example/resume?a="><script>',
+        });
+        expect(html).not.toContain('<script>');
+        expect(html).toContain('&quot;&gt;&lt;script&gt;');
+    });
+});
