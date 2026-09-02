@@ -54,7 +54,19 @@ const s = {
     editArea: { width: '100%', padding: '6px 8px', fontFamily: 'monospace', fontSize: 13, minHeight: 70 },
     editing: { background: '#fffdf3', border: '1px solid #e8dfae', borderRadius: 6, padding: 14 },
     spacer: { flex: 1 },
+
+    // z-index clears the worksheet (4000) and the review sheet (4100), so a confirmation
+    // is legible whichever layer the reviewer is on.
+    toast: {
+        position: 'fixed', top: 14, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 4200, margin: 0, padding: '9px 18px', borderRadius: 6,
+        fontFamily: 'monospace', fontSize: 13, border: '1px solid',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+    },
 };
+
+s.toastOk = { ...s.toast, color: '#1a6b1a', background: '#f2fbf2', borderColor: '#b8dcb8' };
+s.toastErr = { ...s.toast, color: '#a11', background: '#fff4f4', borderColor: '#e2b6b6' };
 
 export default function OnboardingReview() {
     const [record, setRecord] = useState(null);
@@ -68,6 +80,8 @@ export default function OnboardingReview() {
     const [edit, setEdit] = useState(null);
     const [saving, setSaving] = useState(false);
     const [sheetOpen, setSheetOpen] = useState(false);
+    // Bumped after every successful review action to make the worksheet re-read statuses.
+    const [reviewedAt, setReviewedAt] = useState(0);
 
     const open = useCallback(async (id) => {
         setError(null); setMessage(null); setRecord(null); setView('preview');
@@ -133,6 +147,10 @@ export default function OnboardingReview() {
         try {
             await apiFetch(`/admin/onboarding/${id}/${path}`, { method: 'POST', body });
             setMessage(done);
+            // The worksheet underneath reads statuses once on mount. Without this the row
+            // keeps showing pending_review after a successful approve or send-back, which
+            // reads as the action having done nothing.
+            setReviewedAt(Date.now());
             close();
         } catch (e) {
             // The endpoints return the specific validation failures, which is what lets a
@@ -152,6 +170,12 @@ export default function OnboardingReview() {
     const events = draft.events ?? [];
     const reviewable = record?.status === 'pending_review';
 
+    // Inline styles cannot express :disabled, and s.btn sets cursor:pointer flat — so a
+    // disabled button here still followed the mouse like a live one. Compose the state in
+    // explicitly, or the only signal that a click did nothing is that nothing happened.
+    const btnStyle = (isDisabled) =>
+        (isDisabled ? { ...s.btn, cursor: 'not-allowed', opacity: 0.45 } : s.btn);
+
     const editByType = (type) => (edit?.modules ?? []).find((m) => m.type === type)?.data ?? {};
     const editBasic = editByType('basic_info');
     const editJoin = editByType('join');
@@ -168,8 +192,14 @@ export default function OnboardingReview() {
                 Open club worksheet
             </button>
 
-            {error && <p style={s.err}>{error}</p>}
-            {message && <p style={s.ok}>{message}</p>}
+            {/* Fixed, and above both overlays. These used to render in normal flow on the
+                base page — which the worksheet overlay (opaque, inset:0, z-4000) covers
+                completely. A reviewer working inside the worksheet saw the review sheet
+                close and nothing else, with the action having actually succeeded. Only
+                shown while the review sheet is closed; it renders its own errors inline. */}
+            {!record && (error || message) && (
+                <p style={error ? s.toastErr : s.toastOk}>{error || message}</p>
+            )}
 
             {sheetOpen && (
                 <div style={s.overlay} role="dialog" aria-modal="true" aria-label="Club worksheet">
@@ -179,7 +209,7 @@ export default function OnboardingReview() {
                         <span style={s.muted}>Generate links, track progress, review submissions</span>
                     </div>
                     <div style={s.sheetBody}>
-                        <ClubLinkTable onReview={open} />
+                        <ClubLinkTable onReview={open} reloadKey={reviewedAt} />
                     </div>
                 </div>
             )}
@@ -225,22 +255,35 @@ export default function OnboardingReview() {
                             onChange={(e) => setNote(e.target.value)}
                             placeholder="What needs changing?"
                         />
+                        {/* Not disabled on an empty note. It used to be, and that was the one
+                            precondition with nothing to show for it: !reviewable prints the
+                            yellow bar below, but a missing note printed nothing, so the button
+                            sat there looking live (s.btn forces cursor:pointer) and swallowed
+                            every click. Check on click and say so instead — the server returns
+                            the same rule, this just gets to it without a round trip. */}
                         <button
-                            style={s.btn}
-                            disabled={busy || !note.trim() || !reviewable}
-                            onClick={() => act('request-changes', { note: note.trim() }, 'Sent back to the club.')}
+                            style={btnStyle(busy || !reviewable)}
+                            disabled={busy || !reviewable}
+                            onClick={() => {
+                                if (!note.trim()) {
+                                    setMessage(null);
+                                    setError('Add a note so the club knows what to fix.');
+                                    return;
+                                }
+                                act('request-changes', { note: note.trim() }, 'Sent back to the club.');
+                            }}
                         >
                             Request changes
                         </button>
                         <button
-                            style={s.btn}
+                            style={btnStyle(busy || !reviewable)}
                             disabled={busy || !reviewable}
                             onClick={() => act('approve', {}, 'Approved and published.')}
                         >
                             Approve
                         </button>
                         <button
-                            style={s.btn}
+                            style={btnStyle(busy)}
                             disabled={busy}
                             onClick={() => act('unclaim', {}, 'Unclaimed. The link is revoked; issue a new one.')}
                         >
