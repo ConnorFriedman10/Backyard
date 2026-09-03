@@ -22,12 +22,13 @@ const STEPS = [
 ];
 
 export default function WizardShell({ clubId, clubName, clubLogo }) {
+    console.log("Basics Club id: " + clubId);
     const wizard = useWizardDraft(clubId);
     const [index, setIndex] = useState(0);
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
 
-    const isSubmitted = wizard.status === 'pending_review' || wizard.status === 'approved';
+    const isSubmitted = wizard.status === 'approved';
 
     if (wizard.loading) {
         return (
@@ -99,6 +100,12 @@ export default function WizardShell({ clubId, clubName, clubLogo }) {
                     </nav>
 
                     <div className="ob-main">
+                        {wizard.status === 'pending_review' && (
+                            <div className="ob-note">
+                                <strong>Your page is under review.</strong>
+                                <p style={{ margin: '6px 0 0' }}>We'll email you once it's live. You can keep editing and resubmit if you'd like to make changes before we review.</p>
+                            </div>
+                        )}
                         {wizard.status === 'changes_requested' && wizard.reviewNote && (
                             <div className="ob-note">
                                 <strong>A note from the Backyard team:</strong>

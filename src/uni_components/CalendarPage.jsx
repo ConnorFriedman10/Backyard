@@ -25,7 +25,7 @@ const WEEK_DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const EVENT_DAY_COLORS = ['#382825', '#56758b', '#BE0D00', '#FC7200', '#ffcc13'];
 const randomEventDayColor = () => EVENT_DAY_COLORS[Math.floor(Math.random() * EVENT_DAY_COLORS.length)];
 
-export function CalendarPage({ onClose }) {
+export function CalendarPage() {
   const { allData, friendsArray, profile: viewerProfile } = useClubData();
   const clubImageById = useMemo(
     () => new Map(allData.map(club => [club.id, club.image_url])),
@@ -483,7 +483,7 @@ export function CalendarPage({ onClose }) {
                 </span>
               )}
             </h1>
-              {viewMode !== 'week' && (
+              {viewMode === 'day' && (
                 <div className="cal-month-nav">
                   <button className="cal-nav-btn" onClick={() => navigateMonth(-1)}>‹</button>
                   <button className="cal-nav-btn" onClick={() => navigateMonth(1)}>›</button>
@@ -598,32 +598,45 @@ export function CalendarPage({ onClose }) {
             </SkeletonRegion>
           ) : (
             <div className="calpg-align-row calpg-dual-grid-row">
-              <div className="cal-grid calpg-grid-panel">
-                {WEEK_DAYS.map((d, i) => <div key={i} className="cal-weekday-label calpg-weekday-label">{d}</div>)}
-                {cells.map((dayNum, i) => (
-                  <div
-                    key={i}
-                    className={`cal-day-cell${dayNum ? ` ${getDayClass(displayYear, displayMonth, dayNum, monthlyEventsByDay)}` : ' cal-day-empty'}`}
-                    style={dayNum && monthlyEventsByDay.has(dayNum) ? { color: randomEventDayColor() } : undefined}
-                    onClick={dayNum && monthlyEventsByDay.has(dayNum) ? () => setSelectedOverlay({ type: 'month', year: displayYear, month: displayMonth, day: dayNum }) : undefined}
-                  >
-                    {dayNum || ''}
-                  </div>
-                ))}
+              <div className="calpg-grid-col calpg-grid-panel">
+                <div className="calpg-grid-nav-row">
+                  <button className="cal-nav-btn" onClick={() => navigateMonth(-1)}>‹</button>
+                  <span className="calpg-grid-nav-label">{format(monthDisplayDate, 'MMMM')}</span>
+                  <button className="cal-nav-btn calpg-fwd-narrow" onClick={() => navigateMonth(1)}>›</button>
+                </div>
+                <div className="cal-grid">
+                  {WEEK_DAYS.map((d, i) => <div key={i} className="cal-weekday-label calpg-weekday-label">{d}</div>)}
+                  {cells.map((dayNum, i) => (
+                    <div
+                      key={i}
+                      className={`cal-day-cell${dayNum ? ` ${getDayClass(displayYear, displayMonth, dayNum, monthlyEventsByDay)}` : ' cal-day-empty'}`}
+                      style={dayNum && monthlyEventsByDay.has(dayNum) ? { color: randomEventDayColor() } : undefined}
+                      onClick={dayNum && monthlyEventsByDay.has(dayNum) ? () => setSelectedOverlay({ type: 'month', year: displayYear, month: displayMonth, day: dayNum }) : undefined}
+                    >
+                      {dayNum || ''}
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="calpg-grid-divider" aria-hidden="true" />
-              <div className="cal-grid calpg-grid-panel calpg-grid-panel-next">
-                {WEEK_DAYS.map((d, i) => <div key={`next-${i}`} className="cal-weekday-label calpg-weekday-label">{d}</div>)}
-                {nextCells.map((dayNum, i) => (
-                  <div
-                    key={i}
-                    className={`cal-day-cell${dayNum ? ` ${getDayClass(nextYear, nextMonthNum, dayNum, nextMonthlyEventsByDay)}` : ' cal-day-empty'}`}
-                    style={dayNum && nextMonthlyEventsByDay.has(dayNum) ? { color: randomEventDayColor() } : undefined}
-                    onClick={dayNum && nextMonthlyEventsByDay.has(dayNum) ? () => setSelectedOverlay({ type: 'month', year: nextYear, month: nextMonthNum, day: dayNum }) : undefined}
-                  >
-                    {dayNum || ''}
-                  </div>
-                ))}
+              <div className="calpg-grid-col calpg-grid-panel calpg-grid-panel-next">
+                <div className="calpg-grid-nav-row calpg-grid-nav-row--right">
+                  <span className="calpg-grid-nav-label">{format(nextMonthDate, 'MMMM')}</span>
+                  <button className="cal-nav-btn" onClick={() => navigateMonth(1)}>›</button>
+                </div>
+                <div className="cal-grid">
+                  {WEEK_DAYS.map((d, i) => <div key={`next-${i}`} className="cal-weekday-label calpg-weekday-label">{d}</div>)}
+                  {nextCells.map((dayNum, i) => (
+                    <div
+                      key={i}
+                      className={`cal-day-cell${dayNum ? ` ${getDayClass(nextYear, nextMonthNum, dayNum, nextMonthlyEventsByDay)}` : ' cal-day-empty'}`}
+                      style={dayNum && nextMonthlyEventsByDay.has(dayNum) ? { color: randomEventDayColor() } : undefined}
+                      onClick={dayNum && nextMonthlyEventsByDay.has(dayNum) ? () => setSelectedOverlay({ type: 'month', year: nextYear, month: nextMonthNum, day: dayNum }) : undefined}
+                    >
+                      {dayNum || ''}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )
@@ -719,20 +732,22 @@ export function CalendarPage({ onClose }) {
           <button
             type="button"
             className={`calpg-poster-size-btn calpg-poster-size-btn--min${posterSize === 'minimized' ? ' calpg-poster-size-btn--active' : ''}`}
-            aria-label="Minimized poster view"
+            aria-label="Row view"
             aria-pressed={posterSize === 'minimized'}
             onClick={() => setPosterSize('minimized')}
           >
             <GiHamburgerMenu />
+            <span className="calpg-poster-size-label">Row</span>
           </button>
           <button
             type="button"
             className={`calpg-poster-size-btn${posterSize === 'maximized' ? ' calpg-poster-size-btn--active' : ''}`}
-            aria-label="Maximized poster view"
+            aria-label="Card view"
             aria-pressed={posterSize === 'maximized'}
             onClick={() => setPosterSize('maximized')}
           >
             <TbCropPortrait />
+            <span className="calpg-poster-size-label">Card</span>
           </button>
         </div>
       )}

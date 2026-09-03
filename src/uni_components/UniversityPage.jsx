@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import { isUuid, slugifyUniversity, slugMatches } from '../../shared/slug';
 import { UniSearchBar } from './UniSearchBar';
@@ -26,6 +26,8 @@ export const UniversityPage = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const autoExpandId = searchParams.get('club') || null;
   const [university, setUniversity] = useState(null);
   const [results, setResults] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -122,7 +124,8 @@ export const UniversityPage = () => {
       console.log("Else triggering");
       setShowCalendar(false);
       setSelectedCategory(newCategory);
-      const newdata = allData.filter(club => club.category === newCategory);
+      const normalizeCategory = s => s?.toLowerCase().replace(/[\s-]+/g, '_') ?? '';
+      const newdata = allData.filter(club => normalizeCategory(club.category) === normalizeCategory(newCategory));
       setResults(newdata);
     }
   }
@@ -261,7 +264,7 @@ export const UniversityPage = () => {
 
         <main className={`uni-club-stage${showCalendar ? ' uni-fade-hidden' : ''}`}>
           <div className="uni-club-viewport">
-            <ClubList results={results} cardSize={cardSize} />
+            <ClubList results={results} cardSize={cardSize} autoExpandId={autoExpandId} />
           </div>
         </main>
 

@@ -10,8 +10,6 @@ import { SlSocialSpotify } from 'react-icons/sl';
 import { SiLinktree } from 'react-icons/si';
 import { TbBrandDiscord } from 'react-icons/tb';
 import { FiYoutube } from 'react-icons/fi';
-import borderImg from '/src/assets/border-green.svg';
-import borderHorizontalImg from '/src/assets/border-horizontal-green.svg';
 import './BasicInfoModule.css';
 import Avatar from '../components/Avatar';
 
@@ -29,7 +27,7 @@ import Avatar from '../components/Avatar';
  * @param {'full'|'hero'|'about'} props.part - which slice to render; hero is fixed above the accordion
  * @param {boolean} props.linksDisplayed - whether the Links module's visibility checkbox is on; hides the action-bar link buttons entirely when false
  */
-function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions, warning, part = 'full', linksDisplayed = true, taxonomy = [], clubInterests = null, onInterestsChange, onSubcategoryCreated, currentUserId = null }) {
+function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions, warning, part = 'full', linksDisplayed = true, taxonomy = [], clubInterests = null, onInterestsChange, onSubcategoryCreated }) {
   const [dominantColor, setDominantColor] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [descOpen, setDescOpen] = useState(false);
@@ -67,8 +65,6 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
   const { friendMembershipMap } = useClubData();
   const friendsInClub = friendMembershipMap?.get(club.id) || [];
 
-  const friendsInClubIds = new Set(friendsInClub.map(f => f.id));
-
   // Roster (with each member's custom role/tag) is fetched lazily — only needed
   // once the friends modal is actually open, not on every club page load.
   useEffect(() => {
@@ -86,19 +82,8 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
       .map((m) => [m.user_id, m.club_custom_roles])
   );
 
-  // "Other members" = everyone else in the club roster, minus friends already
-  // shown above and minus the current user viewing this modal.
-  const otherMembers = clubRoster
-    .filter((m) => m.user_id !== currentUserId && !friendsInClubIds.has(m.user_id))
-    .map((m) => ({
-      id: m.user_id,
-      username: m.profiles?.username ?? 'Unknown',
-      avatar_url: m.profiles?.avatar_url ?? null,
-    }));
-
   const q = friendsSearch.toLowerCase();
   const filteredInClub = friendsInClub.filter(f => f.username.toLowerCase().includes(q));
-  const filteredOther = otherMembers.filter(f => f.username.toLowerCase().includes(q));
 
   const links = data?.links ?? [];
   const enabledLinks = links.filter(l => l.enabled && l.url);
@@ -563,53 +548,22 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
               placeholder="Club description"
             />
           : <p className="club-description-exp">
-                {descPreview}
+                {descOpen ? displayDescription : descPreview}
               {isLongDesc && (
                 <>
-                  {'… '}
+                  {!descOpen && '… '}
                 <button
                   type="button"
                   className="desc-more-btn"
-                  onClick={() => setDescOpen(true)}
+                  onClick={() => setDescOpen(d => !d)}
                 >
-                    MORE
+                    {descOpen ? 'LESS' : 'MORE'}
                 </button>
                 </>
               )}
             </p>
         }
       </div>
-      )}
-
-      {showAbout && descOpen && (
-        <div className="desc-modal-overlay" onClick={() => setDescOpen(false)}>
-          <div className="desc-modal" onClick={(e) => e.stopPropagation()}>
-            <img src={borderImg} alt="" className="desc-modal-border desc-modal-border-left" />
-            <img src={borderImg} alt="" className="desc-modal-border desc-modal-border-right" />
-            <div
-              className="desc-modal-border-h-wrap desc-modal-border-top-wrap"
-              style={{ backgroundImage: `url(${borderHorizontalImg})` }}
-              aria-hidden="true"
-            />
-            <div
-              className="desc-modal-border-h-wrap desc-modal-border-bottom-wrap"
-              style={{ backgroundImage: `url(${borderHorizontalImg})` }}
-              aria-hidden="true"
-            />
-            <div className="desc-modal-header">
-              <h3 className="desc-modal-title">{displayName}</h3>
-              <button
-                type="button"
-                className="desc-modal-close"
-                onClick={() => setDescOpen(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <p className="desc-modal-body">{displayDescription}</p>
-          </div>
-        </div>
       )}
 
       {showAbout && friendsModalOpen && (
@@ -654,29 +608,7 @@ function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions,
               </>
             )}
 
-            {filteredOther.length > 0 && (
-              <>
-                <div className="friends-modal-section-title">Other Members</div>
-                <div className="friends-modal-list">
-                  {filteredOther.map((friend) => {
-                    const customRole = customRoleByUserId.get(friend.id);
-                    return (
-                      <div className="friend-modal-row" key={friend.id}>
-                        <Avatar className="friend-avatar-sm" url={friend.avatar_url} firstName={friend.first_name} lastName={friend.last_name} username={friend.username} />
-                        <span className="friend-result-name">{friend.username}</span>
-                        {customRole && (
-                          <span className="role-badge friend-result-badge" style={roleColorStyle(customRole.role_color)}>
-                            {customRole.name}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            {filteredInClub.length === 0 && filteredOther.length === 0 && (
+            {filteredInClub.length === 0 && (
               <p className="friends-empty">No friends found.</p>
             )}
           </div>

@@ -12,7 +12,7 @@ import FriendRsvpCallout from '../components/FriendRsvpCallout';
 import '../uni_components/EventInfoRow.css';
 import './AddEventPanel.css';
 
-const EMPTY_FORM = { eventName: '', start: '', end: '', where: '', description: '', membersOnly: false };
+const EMPTY_FORM = { eventName: '', start: '', end: '', where: '', description: '', membersOnly: false, allDay: false };
 
 // Cropping (EventPosterCropModal) re-compresses to JPEG at 0.92 quality, which would
 // bring nearly any phone photo under this — but cropping is optional here, so an
@@ -122,15 +122,22 @@ export default function AddEventPanel({
   }, [editingEventId, imagePreview, formWarning]);
 
   function validateForm() {
-    const { start: startVal, end: endVal, description } = formData;
+    const { start: startVal, end: endVal, description, allDay } = formData;
     if (description.length > 200) { setFormWarning('Description must be 200 characters or fewer.'); return false; }
-    if (!startVal || !endVal) { setFormWarning('Please fill in the start and end times.'); return false; }
-    const start = new Date(startVal);
-    const end = new Date(endVal);
-    if (isNaN(start) || isNaN(end)) { setFormWarning('Invalid date or time format.'); return false; }
-    if (start < new Date()) { setFormWarning('Event cannot begin in the past.'); return false; }
-    if (start >= end) { setFormWarning('Start time must be before end time.'); return false; }
-    if (end - start > 12 * 60 * 60 * 1000) { setFormWarning('Event cannot last more than 12 hours.'); return false; }
+    if (!startVal) { setFormWarning('Please fill in a start date.'); return false; }
+    if (!allDay && !endVal) { setFormWarning('Please fill in the start and end times.'); return false; }
+    if (allDay) {
+      const start = new Date(`${startVal}T00:00:00`);
+      if (isNaN(start)) { setFormWarning('Invalid date format.'); return false; }
+      if (start < new Date(new Date().toDateString())) { setFormWarning('Event cannot begin in the past.'); return false; }
+    } else {
+      const start = new Date(startVal);
+      const end = new Date(endVal);
+      if (isNaN(start) || isNaN(end)) { setFormWarning('Invalid date or time format.'); return false; }
+      if (start < new Date()) { setFormWarning('Event cannot begin in the past.'); return false; }
+      if (start >= end) { setFormWarning('Start time must be before end time.'); return false; }
+      if (end - start > 12 * 60 * 60 * 1000) { setFormWarning('Event cannot last more than 12 hours.'); return false; }
+    }
     setFormWarning('');
     return true;
   }
@@ -225,8 +232,8 @@ export default function AddEventPanel({
         eventName: formData.eventName,
         description: formData.description,
         where: formData.where,
-        startTime: `${formData.start}:00`,
-        endTime: `${formData.end}:00`,
+        startTime: formData.allDay ? `${formData.start}T00:00:00` : `${formData.start}:00`,
+        endTime: formData.allDay ? `${formData.start}T23:59:00` : `${formData.end}:00`,
         imageUrl,
         isMembersOnly: formData.membersOnly,
       };
@@ -362,26 +369,39 @@ export default function AddEventPanel({
         onChange={handleFormChange}
         placeholder="Event Name (Optional)"
       />
+      <label className="cal-allday-label">
+        <input
+          type="checkbox"
+          name="allDay"
+          checked={formData.allDay}
+          onChange={(e) => setFormData(prev => ({ ...prev, allDay: e.target.checked, start: '', end: '' }))}
+        />
+        <span>All Day</span>
+      </label>
       <div className="cal-datetime-field">
         <span className="cal-datetime-label">Start</span>
         <input
           className="cal-input"
-          type="datetime-local"
+          type={formData.allDay ? 'date' : 'datetime-local'}
           name="start"
           value={formData.start}
           onChange={handleFormChange}
+          data-empty={!formData.start ? 'true' : undefined}
         />
       </div>
-      <div className="cal-datetime-field">
-        <span className="cal-datetime-label">End</span>
-        <input
-          className="cal-input"
-          type="datetime-local"
-          name="end"
-          value={formData.end}
-          onChange={handleFormChange}
-        />
-      </div>
+      {!formData.allDay && (
+        <div className="cal-datetime-field">
+          <span className="cal-datetime-label">End</span>
+          <input
+            className="cal-input"
+            type="datetime-local"
+            name="end"
+            value={formData.end}
+            onChange={handleFormChange}
+            data-empty={!formData.end ? 'true' : undefined}
+          />
+        </div>
+      )}
       <input
         className="cal-input"
         type="text"

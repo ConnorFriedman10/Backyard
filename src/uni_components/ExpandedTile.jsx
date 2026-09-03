@@ -23,6 +23,7 @@ import { useGlobalStore } from '../lib/store';
 import { readClubPage, invalidateClubPage } from '../lib/clubPageCache';
 import { Skeleton, SkeletonText } from '../components/Skeleton';
 import InviteLinkButton from '../club_page_components/InviteLinkButton';
+import QrFlyerButton from '../club_page_components/QrFlyerButton';
 import dividerLineImg from '/src/assets/border-horizontal-gray.svg';
 
 // Validation moved to shared/clubPageValidation.js so the server enforces the same
@@ -868,6 +869,7 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
                                     </button>
                                 </div>
                                 <InviteLinkButton clubId={id} />
+                                <QrFlyerButton club={club} />
                             </>
                         ) : (
                             <>

@@ -37,6 +37,7 @@
     "lucide-react": "^1.8.0",
     "motion": "^12.38.0",
     "pg-boss": "^12.26.0",
+    "qrcode": "^1.5.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-helmet": "^6.1.0",
