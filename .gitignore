@@ -27,3 +27,5 @@ dist-onboard/
 
 # Playwright MCP scratch output
 .playwright-mcp/
+.vercel
+.env*

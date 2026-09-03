@@ -9,7 +9,7 @@ import { EVENT_LIMITS } from '../../../shared/clubEventsValidation.js';
 // Events are staged in the draft like everything else and only become real rows when the
 // page is approved. An event created here immediately would show on the public calendar
 // before anyone had reviewed the club.
-export default function Events({ wizard }) {
+export default function Events({ wizard, clubId }) {
     const events = wizard.draft.events ?? [];
     const setEvents = (next) => wizard.setEvents(next);
     const update = (i, patch) =>
@@ -89,6 +89,10 @@ export default function Events({ wizard }) {
                             shape="wide"
                             value={ev.image_url}
                             endpoint="/storage/event-poster-upload-url"
+                            // Required by the endpoint since it started gating on
+                            // requireModerator — without it the upload 400s with
+                            // "club_id is required". Same shape as Basics.jsx.
+                            body={{ club_id: clubId }}
                             onChange={(url) => update(i, { image_url: url })}
                         />
 

@@ -29,7 +29,15 @@ export function useWizardDraft(clubId) {
     }, []);
 
     useEffect(() => {
-        if (!clubId) return;
+        // Returning here without clearing `loading` left WizardShell on its skeleton
+        // permanently: no error, no timeout, and no request in the network tab, which is
+        // the worst shape a bug report can take. ClaimGate now refuses to mount us
+        // without a club id, so this is a backstop — but it has to be a visible one.
+        if (!clubId) {
+            setError('We couldn’t work out which club this link is for. Try opening it again.');
+            setLoading(false);
+            return;
+        }
         let cancelled = false;
 
         apiFetch(`/clubs/${clubId}/onboarding`)
@@ -55,7 +63,15 @@ export function useWizardDraft(clubId) {
     }, [clubId]);
 
     const flush = useCallback(async () => {
-        if (!pending.current || !clubId) return;
+        if (!pending.current) return;
+        // Not a silent return: saveNow() rejecting is the only thing stopping submit()
+        // from sending a draft that was never written. Resolving cleanly here made an
+        // unsaved draft look saved, and the wizard locks read-only after submit.
+        if (!clubId) {
+            const err = new Error('There’s no club to save this draft to.');
+            if (alive.current) { setSaveState('error'); setError(err.message); }
+            throw err;
+        }
         const payload = pending.current;
         setSaveState('saving');
         try {

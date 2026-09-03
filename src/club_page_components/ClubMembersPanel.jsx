@@ -270,7 +270,7 @@ function ManageRolesPanel({ clubId, customRoles, myRole, onClose, onRolesChange 
 
 // ── Main panel ────────────────────────────────────────────────────────────────
 
-export default function ClubMembersPanel({ clubId, myRole, currentUserId, onMembershipChange }) {
+export default function ClubMembersPanel({ clubId, joinPolicy, myRole, currentUserId, onMembershipChange, onJoinPolicyChange }) {
   const [members, setMembers] = useState([]);
   const [customRoles, setCustomRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -435,16 +435,28 @@ export default function ClubMembersPanel({ clubId, myRole, currentUserId, onMemb
         </span>
         <div className="club-members-panel__header-actions">
           {canManage && (
-            <div className="duo-btn-wrap">
-              <div className="duo-btn-pill" aria-hidden="true" />
-              <button
-                className="manage-roles-btn duo-btn"
-                style={{ '--duo-shadow': '#1c2a44' }}
-                onClick={() => setShowManageRoles(true)}
-              >
-                Manage Roles
-              </button>
-            </div>
+            <>
+              <div className="duo-btn-wrap">
+                <div className="duo-btn-pill" aria-hidden="true" />
+                <button
+                  className="manage-roles-btn duo-btn"
+                  style={{ '--duo-shadow': '#1c2a44' }}
+                  onClick={() => setShowManageRoles(true)}
+                >
+                  Manage Roles
+                </button>
+              </div>
+              <div className="duo-btn-wrap">
+                <div className="duo-btn-pill" aria-hidden="true" />
+                <button
+                  className="manage-roles-btn duo-btn"
+                  style={{ '--duo-shadow': '#1c2a44' }}
+                  onClick={onJoinPolicyChange}
+                >
+                  Change Join Policy to {joinPolicy === 'open' ? 'Request' : 'Open'}
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>

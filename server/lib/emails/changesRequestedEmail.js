@@ -25,10 +25,19 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;');
 }
 
-export function renderChangesRequestedEmail({ clubName, firstName, note }) {
+export function renderChangesRequestedEmail({ clubName, firstName, note, resumeUrl }) {
     const club = escapeHtml(clubName || 'your club');
     const greeting = firstName ? `Hi ${escapeHtml(firstName)}` : 'Hi';
     const subject = `One thing to change on ${clubName || 'your club'}'s page`;
+
+    // Telling a club to "open the setup link we sent you" asked them to go digging through
+    // an inbox for a message that may be weeks old — and that original link expires after
+    // 30 days, so by the time a review comes back it is often dead. /resume is keyed on
+    // who they sign in as rather than on a token, so it keeps working.
+    //
+    // Nullable: ONBOARD_URL is optional and appUrls refuses to invent one. Without it the
+    // email falls back to the old wording rather than shipping a button to nowhere.
+    const resume = resumeUrl || null;
 
     const text = [
         `${firstName ? `Hi ${firstName}` : 'Hi'},`,
@@ -37,8 +46,18 @@ export function renderChangesRequestedEmail({ clubName, firstName, note }) {
         '',
         note,
         '',
-        'Open the setup link we sent you and your answers will all still be there.',
-        'Change what you need and send it back, and we will take another look.',
+        ...(resume
+            ? [
+                'Pick up where you left off:',
+                resume,
+                '',
+                'Sign in with the same account you used to claim the club and your answers',
+                'will all still be there. Change what you need and send it back.',
+            ]
+            : [
+                'Open the setup link we sent you and your answers will all still be there.',
+                'Change what you need and send it back, and we will take another look.',
+            ]),
         '',
         'Reply to this email if anything is unclear.',
         '',
@@ -100,11 +119,33 @@ export function renderChangesRequestedEmail({ clubName, firstName, note }) {
           <tr>
             <td style="padding:20px 32px 0 32px;">
               <p style="margin:0;font-family:${FONT};font-size:15px;line-height:1.65;color:${MUTED};">
-                Open the setup link we sent you and your answers will all still be there.
-                Change what you need and send it back, and we'll take another look.
+                ${resume
+                    ? `Sign in with the same account you used to claim ${club} and your answers
+                       will all still be there. Change what you need and send it back.`
+                    : `Open the setup link we sent you and your answers will all still be there.
+                       Change what you need and send it back, and we'll take another look.`}
               </p>
             </td>
           </tr>
+${resume ? `
+          <tr>
+            <td align="center" style="padding:22px 32px 0 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="${RED}" style="border-radius:8px;">
+                    <a href="${escapeHtml(resume)}"
+                       style="display:inline-block;padding:14px 30px;font-family:${FONT};font-size:16px;
+                              font-weight:700;color:#ffffff;text-decoration:none;border-radius:8px;">
+                      Open your page
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:10px 0 0 0;font-family:${FONT};font-size:12px;color:${MUTED};word-break:break-all;">
+                ${escapeHtml(resume)}
+              </p>
+            </td>
+          </tr>` : ''}
 
           <tr>
             <td style="padding:18px 32px 0 32px;">

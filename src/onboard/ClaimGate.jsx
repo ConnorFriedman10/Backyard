@@ -137,16 +137,31 @@ export default function ClaimGate() {
         );
     }
 
-    if (claim && typeof claim === 'object') {
-        return <WizardShell clubId={claim.club_id} clubName={invite.club_name} clubLogo={invite.club_image} />;
+    // The redeem response is the primary source, but GET /invite/:token already returns
+    // club_id and `invite` is in hand by this point — so a redeem that comes back without
+    // the field still opens the wizard rather than stranding the club.
+    const claimedClubId = claim && typeof claim === 'object'
+        ? (claim.club_id ?? invite.club_id ?? null)
+        : null;
+
+    if (claimedClubId) {
+        return <WizardShell clubId={claimedClubId} clubName={invite.club_name} clubLogo={invite.club_image} />;
     }
 
-    if (typeof claim === 'string' && claim !== 'working') {
+    // Redeemed, but with nothing to key the wizard on. This used to mount WizardShell
+    // anyway: useWizardDraft bails on a falsy clubId without clearing `loading`, so the
+    // club sat on a skeleton that never resolved and never issued a request — nothing in
+    // the network tab, nothing to report. Fail loudly and offer the retry instead.
+    const claimError = claim && typeof claim === 'object'
+        ? 'We claimed your club but couldn’t tell which page it belongs to.'
+        : (typeof claim === 'string' && claim !== 'working' ? claim : null);
+
+    if (claimError) {
         return (
             <Page clubName={invite.club_name}>
                 <div className="ob-card ob-card--narrow ob-centered">
                     <h1 className="ob-h1">We couldn&apos;t open your page</h1>
-                    <p className="ob-lede" style={{ margin: '0 auto 18px' }}>{claim}</p>
+                    <p className="ob-lede" style={{ margin: '0 auto 18px' }}>{claimError}</p>
                     <button className="ob-btn" onClick={redeem}>Try again</button>
                 </div>
             </Page>

@@ -29,7 +29,7 @@ import Avatar from '../components/Avatar';
  * @param {'full'|'hero'|'about'} props.part - which slice to render; hero is fixed above the accordion
  * @param {boolean} props.linksDisplayed - whether the Links module's visibility checkbox is on; hides the action-bar link buttons entirely when false
  */
-function BasicInfoModule({ club, data, topTags, editing, onChange, onLogoChange, actions, warning, part = 'full', linksDisplayed = true, taxonomy = [], clubInterests = null, onInterestsChange, onSubcategoryCreated, currentUserId = null }) {
+function BasicInfoModule({ club, data, editing, onChange, onLogoChange, actions, warning, part = 'full', linksDisplayed = true, taxonomy = [], clubInterests = null, onInterestsChange, onSubcategoryCreated, currentUserId = null }) {
   const [dominantColor, setDominantColor] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [descOpen, setDescOpen] = useState(false);
@@ -39,7 +39,6 @@ function BasicInfoModule({ club, data, topTags, editing, onChange, onLogoChange,
   const [friendsSearch, setFriendsSearch] = useState('');
   const [imageWarning, setImageWarning] = useState('');
   const [linksExpanded, setLinksExpanded] = useState(false);
-  const [linksModalOpen, setLinksModalOpen] = useState(false);
   // club interests edit state (only used when editing=true)
   const [subText, setSubText] = useState(['', '']);
   const [subDropdown, setSubDropdown] = useState(null); // 0 | 1 | null
@@ -210,7 +209,7 @@ function BasicInfoModule({ club, data, topTags, editing, onChange, onLogoChange,
     });
 
     if (validity === 'load') {
-      setImageWarning('Image upload unsuccessful. Please try a different file.');
+      setImageWarning('This file format isn\'t supported. Save your image as JPEG, PNG, or WebP and try again.');
       return;
     }
     if (validity === 'proportions') {
@@ -452,7 +451,7 @@ function BasicInfoModule({ club, data, topTags, editing, onChange, onLogoChange,
               {editing && (
                 <label className="logo-upload-label">
                   Change Logo
-                  <input type="file" accept="image/*" hidden onChange={handleLogoChange} />
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,.png,.jpg,.jpeg,.webp,.gif,.avif" hidden onChange={handleLogoChange} />
                 </label>
               )}
             </div>

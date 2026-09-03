@@ -269,4 +269,58 @@ function collectEventText(events) {
   return out;
 }
 
+// GET /api/me/onboarding — the token-free way back into the wizard.
+//
+// Mounted separately because this router sits under /api/clubs and this route is keyed on
+// the caller, not a club.
+//
+// The claim token grants a role once and then plays no further part in authorization —
+// every route above checks club_memberships.role. But /claim/:token was the onboard
+// bundle's only entry point, which made the token an address as well as a grant. A link
+// that expired (30 days by default) or was revoked therefore locked a club out of a page
+// they were still fully authorized to edit, and minting a replacement is refused for any
+// club that already has an owner. Between those two rules there was no supported way
+// back. This is it.
+export const meOnboardingRouter = express.Router();
+
+meOnboardingRouter.get('/', requireAuth, async (req, res) => {
+  const { data: memberships, error: membershipError } = await supabaseAdmin
+    .from('club_memberships')
+    .select('club_id')
+    .eq('user_id', req.user.id)
+    .in('role', ['moderator', 'top_moderator']);
+
+  if (membershipError) {
+    const err = new Error(membershipError.message);
+    err.status = 502;
+    throw err;
+  }
+
+  const clubIds = (memberships ?? []).map((m) => m.club_id);
+  if (clubIds.length === 0) return res.json({ clubs: [] });
+
+  // Inner-joined on club_onboarding rather than listing every club they moderate: a
+  // moderator of a long-published club has no wizard to resume and belongs on their club
+  // page instead.
+  const { data: rows, error } = await supabaseAdmin
+    .from('club_onboarding')
+    .select('club_id, status, demo_club_data(club_name, image_url)')
+    .in('club_id', clubIds);
+
+  if (error) {
+    const err = new Error(error.message);
+    err.status = 502;
+    throw err;
+  }
+
+  res.json({
+    clubs: (rows ?? []).map((r) => ({
+      club_id: r.club_id,
+      status: r.status,
+      club_name: r.demo_club_data?.club_name ?? '',
+      club_image: r.demo_club_data?.image_url ?? null,
+    })),
+  });
+});
+
 export default router;

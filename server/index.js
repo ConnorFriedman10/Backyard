@@ -8,7 +8,7 @@ import { ALLOWED_ORIGINS } from './lib/appUrls.js';
 
 import clubsRouter from './routes/clubs.js';
 import clubDetailsRouter from './routes/clubDetails.js';
-import onboardingRouter from './routes/onboarding.js';
+import onboardingRouter, { meOnboardingRouter } from './routes/onboarding.js';
 import adminOnboardingRouter from './routes/adminOnboarding.js';
 import searchRouter from './routes/search.js';
 import universitiesRouter from './routes/universities.js';
@@ -140,6 +140,9 @@ app.use('/api/me/blocks', friendsLimiter, blocksRouter);
 // Irreversible, so it gets its own tight bucket rather than sharing one.
 app.use('/api/me/account', limiter(10), accountRouter);
 app.use('/api/me/interests', limiter(100), userInterestsRouter);
+// Mounted on the exact path, before the broad '/api/me' router below — same
+// mount-order rule as /api/users/check-username further down.
+app.use('/api/me/onboarding', limiter(60), meOnboardingRouter);
 app.use('/api/friend-requests', friendRequestsLimiter, friendRequestsRouter);
 app.use('/api/me/notifications', notificationsLimiter, notificationsRouter);
 app.use('/api/me', profilesRouter); // serves /profile and /membership

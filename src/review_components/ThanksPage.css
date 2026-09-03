@@ -3,7 +3,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem 0;
+    padding: 0;
 }
 
 .thanks-card {
@@ -20,25 +20,29 @@
     flex-direction: row;
     align-items: center;
     gap: clamp(1rem, 3vw, 2rem);
-    margin-bottom: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 1rem;
 }
 
 .thanks-avatar-container {
     flex-shrink: 0;
+    /* Same 25% as .thanks-club-image-container — .thanks-header and
+       .thanks-club-info are both full-width rows of .thanks-card, so this
+       resolves to the same pixel width as the club image below it. */
+    width: 25%;
 }
 
 .thanks-avatar {
-    width: clamp(8rem, 15vw, 16rem);
-    height: clamp(8rem, 15vw, 16rem);
+    width: 100%;
+    height: auto;
     object-fit: cover;
     border-radius: 50%;
 }
 
 .thanks-title {
-    font-family: 'Barlow', sans-serif;
-    font-weight: 300;
-    font-size: clamp(2.5rem, 4vw, 4.5rem);
-    color: black;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 400;
+    font-size: clamp(2.5rem, 5vw, 6.5rem);
+    color: #2f2f2f;
     line-height: 1.3;
     margin: 0;
 }
@@ -54,9 +58,14 @@
 
 .thanks-divider {
     width: 100%;
-    height: 1px;
-    background: #818181;
-    margin-bottom: clamp(2rem, 3vw, 2.5rem);
+    height: 2px;
+    background-image: url('/src/assets/border-horizontal-gray.svg');
+    background-repeat: repeat-x;
+    background-position: left center;
+    background-size: auto 100%;
+    /* Matches .thanks-header's own margin-bottom (1rem) so the divider sits
+       evenly between thanks-title above it and thanks-bottom below it. */
+    margin-bottom: 1rem;
 }
 
 .thanks-bottom {
@@ -72,49 +81,37 @@
     display: flex;
     align-items: center;
     gap: clamp(1rem, 2vw, 1.5rem);
+    width: 100%;
 }
 
 .thanks-club-image-container {
     flex-shrink: 0;
-    width: clamp(4rem, 7vw, 6rem);
-    height: clamp(4rem, 7vw, 6rem);
-    border-radius: 15px;
+    width: 25%;
+    height: auto;
+    border-radius: 999px;
+    /* Needs its own matching radius, not just the image's: overflow:hidden clips
+       to this box's own shape, so a square container would still clip a rounded
+       image's corners back to square. */
     overflow: hidden;
 }
 
 .thanks-club-image {
+    display: block;
     width: 100%;
-    height: 100%;
+    height: auto;
     object-fit: cover;
+    border-radius: 999px;
+    border: 1px solid gray;
 }
 
 .thanks-feedback-text {
-    font-family: 'Barlow', sans-serif;
+    flex: 1;
+    min-width: 0;
+    font-family: 'Barlow Condensed', sans-serif;
     font-weight: 300;
     font-size: clamp(1.5rem, 3vw, 3rem);
-    color: black;
+    color: #565656;
     margin: 0;
-}
-
-.thanks-return-btn {
-    background: #443504;
-    border: none;
-    border-radius: 100px;
-    padding: clamp(0.75rem, 2vw, 0.5rem);
-    cursor: pointer;
-    transition: background 0.3s ease;
-    white-space: nowrap;
-}
-
-.thanks-return-btn:hover {
-    background: #5a4605;
-}
-
-.thanks-return-btn span {
-    font-family: 'barlow condensed', sans-serif;
-    font-weight: 400;
-    font-size: clamp(1.125rem, 2vw, 1.5rem);
-    color: white;
 }
 
 .thanks-reviews-section {
@@ -124,18 +121,42 @@
 }
 
 /* Mobile adjustments */
-@media (max-width: 640px) {
+@media (max-width: 700px) {
     .thanks-header {
         flex-direction: column;
+        /* Overrides the base rule's align-items: center — that only affects an
+           item's own auto-sized width, so it shouldn't have blocked width:100%
+           below, but stretch removes any ambiguity and is what "each takes the
+           whole row" actually calls for in a column flex container. */
+        align-items: stretch;
         text-align: center;
     }
-    
+
+    /* Full-width so the percentage below resolves against .thanks-page, not
+       whatever .thanks-avatar-container would otherwise shrink-to-fit to as a
+       flex item with no explicit size of its own. */
+    .thanks-avatar-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .thanks-avatar {
+        /* 2/3 of .thanks-page. */
+        width: 66.6667%;
+        height: auto;
+    }
+
+    /* Its own row below the avatar, rather than the row-direction pairing above
+       700px — flex-basis:100% forces it, same as width:100%, in case anything
+       upstream is still constraining the item's main-axis size. */
+    .thanks-title {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
     .thanks-bottom {
         flex-direction: column;
         align-items: flex-start;
-    }
-    
-    .thanks-return-btn {
-        width: 100%;
     }
 }

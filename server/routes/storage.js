@@ -139,6 +139,16 @@ router.post('/club-logo-upload-url', async (req, res) => {
 });
 
 router.post('/event-poster-upload-url', async (req, res) => {
+    const clubId = req.body.club_id ?? req.body.clubId;
+    if (!clubId) return res.status(400).json({ error: 'club_id is required' });
+
+    // Namespaced by uploader, not by club — matches /club-media-video-upload-url
+    // below, the other growing-collection-of-club-media bucket (club_logos is
+    // different: one deterministic file per club, overwritten in place, not a
+    // collection). club_id is still required so only a moderator of that club
+    // can mint an upload URL at all.
+    await requireModerator(req.user.id, clubId);
+
     const ext = imageExt(req.body?.ext, 'jpg');
     const rand = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const path = `${req.user.id}/${rand}.${ext}`;
