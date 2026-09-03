@@ -57,8 +57,12 @@ const validBody = {
     clubId: 'club-1',
     clubName: 'Chess Club',
     description: 'Weekly meetup',
-    startTime: '2026-09-01T18:00:00Z',
-    endTime: '2026-09-01T19:00:00Z',
+    // Relative to now, not hardcoded. These were fixed 2026-09-01 timestamps, so the
+    // whole suite went red on its own once that date passed — validateEventFields
+    // rejects a start time in the past, and four tests started 400ing on a clock tick
+    // rather than a code change.
+    startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    endTime: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(),
     eventName: 'Blitz Night',
     where: 'Snell 101',
     isMembersOnly: true,
