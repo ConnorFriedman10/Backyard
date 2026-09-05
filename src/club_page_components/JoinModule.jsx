@@ -111,9 +111,9 @@ function JoinModule({ data, editing, onChange, warning }) {
         </>
       )}
 
-      {(applicationLink || contactLink) && (
+      {(isValidUrl(applicationLink) || isValidContactLink(contactLink)) && (
         <div className="join-actions">
-          {applicationLink && (
+          {isValidUrl(applicationLink) && (
             <div className="duo-btn-wrap">
               <div className="duo-btn-pill" aria-hidden="true" />
               <a
@@ -128,7 +128,7 @@ function JoinModule({ data, editing, onChange, warning }) {
               </a>
             </div>
           )}
-          {contactLink && (
+          {isValidContactLink(contactLink) && (
             <div className="duo-btn-wrap">
               <div className="duo-btn-pill" aria-hidden="true" />
               <a

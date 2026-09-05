@@ -450,8 +450,14 @@
 .cal-form-footer {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
+}
+
+.cal-footer-checks {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .cal-members-only-label {
@@ -494,29 +500,21 @@
   flex: none;
 }
 
-/* Hide placeholder chrome on empty datetime-local inputs */
-.cal-input[type="datetime-local"][data-empty="true"]::-webkit-datetime-edit,
-.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit {
+/* Empty date/time inputs: hide the number placeholders (mm, dd, yyyy, hh, mm)
+   but keep the "/" and ":" separators visible */
+.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit-month-field,
+.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit-day-field,
+.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit-year-field,
+.cal-input[type="time"][data-empty="true"]::-webkit-datetime-edit-hours-field,
+.cal-input[type="time"][data-empty="true"]::-webkit-datetime-edit-minutes-field,
+.cal-input[type="time"][data-empty="true"]::-webkit-datetime-edit-ampm-field {
   color: transparent;
 }
-
-.cal-allday-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit-text,
+.cal-input[type="time"][data-empty="true"]::-webkit-datetime-edit-text {
   color: #ECE7E5;
-  font-size: 15px;
-  cursor: pointer;
-  align-self: flex-start;
 }
 
-.cal-allday-label input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  cursor: pointer;
-  accent-color: #ECE7E5;
-}
 
 .cal-submit-btn {
   width: 100%;

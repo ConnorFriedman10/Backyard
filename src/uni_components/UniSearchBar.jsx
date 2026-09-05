@@ -42,7 +42,6 @@ export const UniSearchBar = ({
   const [input, setInput] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState(null)
-  const [clubs, setClubs] = useState([])
   const [displayText, setDisplayText] = useState("")
   const { allData } = useClubData()
   const textareaRef = useRef(null)
@@ -64,6 +63,7 @@ export const UniSearchBar = ({
   const [phraseIndex, setPhraseIndex] = useState(0)
 
   const [isInteracted, setIsInteracted] = useState(false);
+  const skipSearchRef = useRef(false);
 
   const examplePhrases = ["Show me project based engineering clubs for beginners ", 
                     "Show me dance clubs for affinity groups", 
@@ -78,6 +78,9 @@ export const UniSearchBar = ({
       new CustomEvent("backyard-category-select", { detail: { category } })
     );
     setMenuOpen(false);
+    skipSearchRef.current = true;
+    setInput('');
+    setIsInteracted(false);
   };
 
   // The nav bar's Clubs and Calendar buttons clear the page's category filter,
@@ -133,13 +136,15 @@ useEffect(() => {
     return () => clearTimeout(timer);
   }, [displayText, isInteracted, isDeleting, phraseIndex, input]);
   
-   
+
     useEffect(() => {
     // No input: allData is already loaded by ClubDataProvider, so filter client-side
     // immediately rather than burning a round trip or making the user wait on a debounce.
+    // Skip when a category was just selected — that clears the input but UniversityPage
+    // already set the filtered results; overwriting them here would undo the filter.
     if (input.trim() === "") {
+      if (skipSearchRef.current) { skipSearchRef.current = false; return; }
       const data = allData.filter((c) => c.school === university).slice(0, 100);
-      setClubs(data);
       setResults(data);
       return;
     }
@@ -159,7 +164,6 @@ useEffect(() => {
         // A newer query superseded this one while it was in flight; dropping the result
         // keeps a slow early response from overwriting fresher matches.
         if (cancelled) return;
-        setClubs(data);
         setResults(data);
       } catch (err) {
         if (!cancelled) console.error("Error fetching clubs via search:", err);

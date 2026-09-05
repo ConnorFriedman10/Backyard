@@ -115,6 +115,7 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
     const [joinPolicy, setJoinPolicy] = useState(() => club?.join_policy ?? 'open');
     // NOTE2SELF: THIS WILL BECOME IRRELEVANT LATER AS A LOADING STATE ACROSS ALL MODULES/INFO IS PUT IN PLACE
     const [memberLoading, setMemberLoading] = useState(false);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     // active tab: 'page' | 'members'
     const [activeTab, setActiveTab] = useState('page');
     // info from modules data to be displayed from db
@@ -132,8 +133,6 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
     // favorites heart — mirrors the behavior in ClubGrid
     const [heartAnimating, setHeartAnimating] = useState(false);
     const [favError, setFavError] = useState(null);
-    // Subscribe/Unsubscribe — UI-only toggle for now, no backend persistence yet
-    const [subscribed, setSubscribed] = useState(false);
     // pending user-submitted FAQ questions (approved editors only) + ids to delete on Save
     const [userFaqs, setUserFaqs] = useState([]);
     const [questionDeletes, setQuestionDeletes] = useState(() => new Set());
@@ -152,6 +151,7 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
 
     const isMember = myRole !== null;
     const isApproved = myRole === 'moderator' || myRole === 'top_moderator';
+    const hasOwner = clubMembers.length > 0;
     // Deliberately narrower than isApproved: changing who can get in is an ownership
     // decision, so a plain moderator does not get the toggle.
 
@@ -446,6 +446,15 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
         setClubEvents((prev) => prev.filter((e) => e.id !== eventId));
     };
 
+    const handleDeleteReview = useCallback(async (reviewId) => {
+        set_reviews(prev => prev.filter(r => r.id !== reviewId));
+        try {
+            await apiFetch(`/reviews/${reviewId}`, { method: 'DELETE' });
+        } catch (err) {
+            console.error('Failed to delete comment:', err);
+        }
+    }, []);
+
     const moduleWarnings = isEditing ? getModuleWarnings(draft) : {};
     const isDraftValid = Object.values(moduleWarnings).every(w => w == null);
     // Accept a user question: append {q,a} to the faqs module draft and mark the row to delete on Save.
@@ -585,13 +594,13 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
     const actionRow = (
         <div className="exp-action-row">
             <div className="exp-action-row-inner">
-                {user && (
+                {user && (isMember || hasOwner) && (
                     <div className="duo-btn-wrap">
                         <div className="duo-btn-pill" aria-hidden="true" />
                         <button
                             className={`membership-btn duo-btn ${isMember ? 'leave' : 'join'}`}
                             style={{ '--duo-shadow': isMember ? 'rgb(90, 20, 20)' : 'rgb(76, 102, 57)' }}
-                            onClick={handleMembership}
+                            onClick={isMember ? () => setShowLeaveConfirm(true) : handleMembership}
                             disabled={memberLoading}
                         >
                             {memberLoading ? '...' : membershipAction.label}
@@ -613,7 +622,7 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
                     </div>
                 )}
 
-                {isClicked
+                {isMember && (isClicked
                     ? <img src={logImage} className="log-btn" alt="Clicked state" />
                     : (
                         <div className="duo-btn-wrap">
@@ -627,19 +636,7 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
                             </button>
                         </div>
                     )
-                }
-
-                <div className="duo-btn-wrap">
-                    <div className="duo-btn-pill" aria-hidden="true" />
-                    <button
-                        className="add-events-btn duo-btn"
-                        style={{ '--duo-shadow': 'rgb(0, 0, 0)' }}
-                        type="button"
-                        onClick={() => setSubscribed(prev => !prev)}
-                    >
-                        {subscribed ? 'Unsubscribe' : 'Subscribe'}
-                    </button>
-                </div>
+                )}
 
                 {favError && <div className="exp-fav-error">{favError}</div>}
             </div>
@@ -762,6 +759,7 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
                         setHideDraft(prev => ({ ...prev, [reviewId]: hidden }))
                     }
                     warning={moduleWarnings.comments ?? null}
+                    onDelete={handleDeleteReview}
                 />
             );
         }
@@ -769,6 +767,7 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
     };
 
     return (
+        <>
         <motion.div
             className="expanded-card"
             style={{ pointerEvents: isClosing ? "none" : "auto" }}
@@ -1003,6 +1002,37 @@ function ExpandedTile({ club, onClose, onMembershipChange }) {
             </>
             )}
         </motion.div>
+
+        {showLeaveConfirm && (
+            <div className="leave-confirm-overlay" onClick={() => setShowLeaveConfirm(false)}>
+                <div className="leave-confirm-modal" onClick={(e) => e.stopPropagation()}>
+                    <p className="leave-confirm-title">Leave {club.club_name}?</p>
+                    <p className="leave-confirm-body">
+                        You'll lose your membership and any role you hold in this club.
+                    </p>
+                    {joinPolicy === 'request' && (
+                        <p className="leave-confirm-warning">
+                            This club requires approval to join — you'll have to submit a new request and wait to be let back in.
+                        </p>
+                    )}
+                    <div className="leave-confirm-actions">
+                        <button
+                            className="leave-confirm-btn leave-confirm-cancel"
+                            onClick={() => setShowLeaveConfirm(false)}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            className="leave-confirm-btn leave-confirm-confirm"
+                            onClick={() => { setShowLeaveConfirm(false); handleMembership(); }}
+                        >
+                            Leave Club
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 }
 

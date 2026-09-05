@@ -2,16 +2,18 @@
   position: fixed;
   inset: 0;
   margin: auto;
-
-  background: rgb(252, 252, 252);
   height: 100%;
-  overflow: hidden;
-  background: transparent;
+  overflow-y: auto;
+  scrollbar-width: none;
+  background: rgb(249, 245, 240);
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: auto;
   z-index: 8000;
+}
+
+.expanded-card::-webkit-scrollbar {
+  display: none;
 }
 
 .expanded-card::before {
@@ -137,22 +139,23 @@
   100% { transform: scale(1); }
 }
 
-.close-btn {
+.expanded-card .close-btn {
   position: fixed;
-  top: 32px;
-  right: 32px;
-  background: rgb(234, 234, 230);
+  top: 20px;
+  right: 20px;
+  background: none;
   border: none;
   cursor: pointer;
   font-size: 2rem;
   line-height: 1;
   z-index: 8300;
   padding: 4px 6px;
+  color: #333;
 }
 
 /* Editors: the close button lives at the end of .exp-editor-header instead
    of floating fixed over the viewport corner. */
-.close-btn--header {
+.expanded-card .close-btn--header {
   position: static;
   top: auto;
   right: auto;
@@ -395,5 +398,86 @@
     width: 100vw;
     height: 100vh;
   }
+}
+
+/* ─── Leave-club confirmation modal ─── */
+.leave-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+}
+
+.leave-confirm-modal {
+  background: rgb(249, 245, 240);
+  border-radius: 16px;
+  padding: 28px 28px 22px;
+  max-width: 360px;
+  width: calc(100% - 48px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.leave-confirm-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #1e1a18;
+  margin: 0;
+}
+
+.leave-confirm-body {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem;
+  color: #3e2a09;
+  margin: 0;
+}
+
+.leave-confirm-warning {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgb(122, 60, 0);
+  background: rgba(180, 100, 0, 0.1);
+  border-left: 3px solid rgb(180, 100, 0);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 0;
+}
+
+.leave-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.leave-confirm-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 90px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.leave-confirm-btn:hover {
+  transform: scale(1.04);
+}
+
+.leave-confirm-cancel {
+  background: rgb(220, 215, 208);
+  color: #3e2a09;
+}
+
+.leave-confirm-confirm {
+  background: rgb(120, 30, 30);
+  color: #fff;
 }
 

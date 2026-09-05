@@ -90,6 +90,35 @@ function pickWritable(body) {
     return out;
 }
 
+router.delete('/:reviewId', async (req, res) => {
+    const { data: review, error: fetchErr } = await supabaseAdmin
+        .from('reviews')
+        .select('id, user_id')
+        .eq('id', req.params.reviewId)
+        .single();
+
+    if (fetchErr || !review) {
+        return res.status(404).json({ error: 'Review not found' });
+    }
+
+    if (review.user_id !== req.user.id) {
+        return res.status(403).json({ error: 'You can only delete your own comments' });
+    }
+
+    const { error } = await supabaseAdmin
+        .from('reviews')
+        .delete()
+        .eq('id', req.params.reviewId);
+
+    if (error) {
+        const err = new Error(error.message);
+        err.status = 502;
+        throw err;
+    }
+
+    res.status(204).end();
+});
+
 router.post('/', checkMuted, async (req, res) => {
     const patch = pickWritable(req.body);
     if (!patch.club_id) {
