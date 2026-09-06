@@ -84,6 +84,7 @@ export function CalendarModule({
       setAttendeesMap(prev => ({ ...prev, [eventId]: [] }));
       setAttendeesOpenId(eventId);
     }
+  };
   const openAttendeesOverlay = (event, tab = 'going') => {
     setAttendeesEvent(event);
     setAttendeesTab(tab);

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import QRCode from 'qrcode';
 import { slugifyUniversity } from '../../shared/slug';
 import flyerBg from '../assets/qr-flyer-bg.svg';
+import racImg from '../assets/rac7.0.png';
+import headerLogoImg from '../assets/header_logo.png';
 import './QrFlyerButton.css';
 
 const W = 1275;
@@ -15,24 +17,6 @@ function loadImage(src, crossOrigin) {
     img.onerror = reject;
     img.src = src;
   });
-}
-
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  const words = text.split(' ');
-  let line = '';
-  let currentY = y;
-  for (const word of words) {
-    const test = line ? `${line} ${word}` : word;
-    if (ctx.measureText(test).width > maxWidth && line) {
-      ctx.fillText(line, x, currentY);
-      line = word;
-      currentY += lineHeight;
-    } else {
-      line = test;
-    }
-  }
-  if (line) ctx.fillText(line, x, currentY);
-  return currentY;
 }
 
 export default function QrFlyerButton({ club }) {
@@ -58,45 +42,27 @@ export default function QrFlyerButton({ club }) {
         ctx.fillRect(0, 0, W, H);
       }
 
-      // Club image (centered, upper area)
-      const imgSize = 420;
+      // Raccoon mascot (centered, upper area)
+      const imgSize = 380;
       const imgX = (W - imgSize) / 2;
-      const imgY = 180;
-      if (club.image_url) {
-        try {
-          const clubImg = await loadImage(club.image_url, 'anonymous');
-          ctx.save();
-          ctx.beginPath();
-          ctx.roundRect(imgX, imgY, imgSize, imgSize, 20);
-          ctx.clip();
-          ctx.drawImage(clubImg, imgX, imgY, imgSize, imgSize);
-          ctx.restore();
-        } catch {
-          // CORS or load failure — skip the image
-        }
-      }
+      const imgY = 130;
+      const racImage = await loadImage(racImg);
+      ctx.drawImage(racImage, imgX, imgY, imgSize, imgSize);
 
       const textX = W / 2;
       const maxTextW = W - 160;
 
-      // Club name
-      ctx.fillStyle = '#3b3c3c';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.font = `bold 80px 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif`;
-      const nameY = imgY + imgSize + 70;
-      const nameEndY = wrapText(ctx, club.club_name.toUpperCase(), textX, nameY, maxTextW, 88);
-
-      // Tagline
-      ctx.font = `48px 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif`;
-      ctx.fillStyle = '#56758b';
-      const taglineY = nameEndY + 80;
-      ctx.fillText('Come find us on Backyard', textX, taglineY);
+      // Header logo (below the mascot, coupled tightly with it)
+      const headerLogo = await loadImage(headerLogoImg);
+      const logoW = maxTextW * 0.55;
+      const logoH = logoW * (headerLogo.height / headerLogo.width);
+      const logoY = imgY + imgSize + 10;
+      ctx.drawImage(headerLogo, textX - logoW / 2, logoY, logoW, logoH);
 
       // QR code
       const qrSize = 520;
       const qrX = (W - qrSize) / 2;
-      const qrY = H - qrSize - 160;
+      const qrY = H - qrSize - 200;
       const qrCanvas = document.createElement('canvas');
       await QRCode.toCanvas(qrCanvas, clubUrl, {
         width: qrSize,
@@ -105,10 +71,12 @@ export default function QrFlyerButton({ club }) {
       });
       ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
 
-      // Scan hint
-      ctx.font = `32px 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif`;
-      ctx.fillStyle = '#6b6b6b';
-      ctx.fillText('Scan to visit our page', textX, qrY + qrSize + 44);
+      // Club name
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.font = `400 60px 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif`;
+      ctx.fillStyle = '#3b3c3c';
+      ctx.fillText(club.club_name.toUpperCase(), textX, qrY + qrSize + 20);
 
       canvas.toBlob((blob) => {
         const a = document.createElement('a');

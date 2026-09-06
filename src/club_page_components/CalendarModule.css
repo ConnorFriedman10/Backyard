@@ -437,6 +437,8 @@
 .cal-attendee-name {
   font-size: 13px;
   color: #333;
+}
+
 /* ===== ACTION ROW (Interested + Maybe buttons) ===== */
 .cal-action-row {
   display: flex;
