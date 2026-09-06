@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../../lib/api';
 import { checkDraftReady } from '../../../shared/onboardingDraft.js';
 
 // Last screen before submitting. Its job is to make gaps obvious, not to congratulate
@@ -10,6 +12,25 @@ export default function Review({ wizard }) {
     const stats = wizard.getModule('stats')?.stats ?? [];
     const events = wizard.draft.events ?? [];
     const details = wizard.draft.details ?? {};
+    const interests = wizard.draft.interests ?? {};
+
+    const [taxonomy, setTaxonomy] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        apiFetch('/interests', { auth: false })
+            .then((data) => { if (!cancelled) setTaxonomy(data); })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, []);
+
+    const categoryLabel = (() => {
+        if (!interests.category_id) return '';
+        const cat = taxonomy?.find((c) => c.id === interests.category_id);
+        const subs = (interests.subcategories ?? []).map((s) => s.name).filter(Boolean);
+        const catName = cat?.name ?? (taxonomy ? '' : '…');
+        return [catName, ...subs].filter(Boolean).join(' · ');
+    })();
 
     const problems = checkDraftReady(wizard.draft);
 
@@ -17,7 +38,7 @@ export default function Review({ wizard }) {
         { key: 'Name', value: basic.club_name, required: true },
         { key: 'Logo', value: basic.logo_url ? 'Uploaded' : '', required: false },
         { key: 'About', value: basic.description, required: true },
-        { key: 'Category', value: details.category, required: false },
+        { key: 'Category', value: categoryLabel, required: false },
         { key: 'Links', value: countLabel(basic.links, 'link'), required: false },
         { key: 'Joining', value: countLabel(join.tabs, 'section'), required: false },
         { key: 'Contact', value: details.email, required: false },

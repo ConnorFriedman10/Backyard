@@ -204,7 +204,8 @@ router.get('/:clubId/events/upcoming', optionalAuth, async (req, res) => {
 });
 
 // GET /api/clubs/:clubId/events/rsvps?eventIds=a,b,c
-// Returns all RSVPs for the given event IDs (used for friend callouts).
+// Returns all RSVPs/maybes for the given event IDs with basic profile data.
+// Shape: [{ user_id, event_id, status, profile: { first_name, last_name, username, avatar_url } }]
 //
 // requireAuth was added here deliberately. The route previously had no auth middleware of
 // its own — it was only ever reachable by authenticated callers because questions.js was
@@ -218,9 +219,9 @@ router.get('/:clubId/events/rsvps', requireAuth, async (req, res) => {
   const ids = String(idsParam).split(',').filter(Boolean);
   if (ids.length === 0) return res.json([]);
 
-  const { data, error } = await supabaseAdmin
+  const { data: rsvpData, error } = await supabaseAdmin
     .from('attendees')
-    .select('user_id, event_id')
+    .select('user_id, event_id, status')
     .in('event_id', ids);
 
   if (error) {
@@ -230,16 +231,29 @@ router.get('/:clubId/events/rsvps', requireAuth, async (req, res) => {
   }
 
   const blockedIds = await getBlockedIds(req.user.id);
-  res.json(filterBlocked(data, blockedIds, (r) => r.user_id));
+  const filtered = filterBlocked(rsvpData, blockedIds, (r) => r.user_id);
+
+  // Fetch profiles for all attendees in one query so the client can show avatars.
+  const userIds = [...new Set(filtered.map((r) => r.user_id))];
+  let profileMap = {};
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('id, first_name, last_name, username, avatar_url')
+      .in('id', userIds);
+    profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p]));
+  }
+
+  res.json(filtered.map((r) => ({ ...r, profile: profileMap[r.user_id] || null })));
 });
 
-// POST /api/clubs/:clubId/events/:eventId/rsvp — auth required
+// POST /api/clubs/:clubId/events/:eventId/rsvp — marks user as "going"
 router.post('/:clubId/events/:eventId/rsvp', requireAuth, async (req, res) => {
   const { error } = await supabaseAdmin
     .from('attendees')
     .upsert(
-      { user_id: req.user.id, event_id: req.params.eventId },
-      { onConflict: 'user_id,event_id', ignoreDuplicates: true }
+      { user_id: req.user.id, event_id: req.params.eventId, status: 'going' },
+      { onConflict: 'user_id,event_id' }
     );
 
   if (error) {
@@ -277,6 +291,14 @@ router.get('/:clubId/events/:eventId/attendees', requireAuth, async (req, res) =
     .from('attendees')
     .select('user_id, profiles(username, avatar_url)')
     .eq('event_id', eventId);
+// POST /api/clubs/:clubId/events/:eventId/maybe — marks user as "maybe"
+router.post('/:clubId/events/:eventId/maybe', requireAuth, async (req, res) => {
+  const { error } = await supabaseAdmin
+    .from('attendees')
+    .upsert(
+      { user_id: req.user.id, event_id: req.params.eventId, status: 'maybe' },
+      { onConflict: 'user_id,event_id' }
+    );
 
   if (error) {
     const err = new Error(error.message);
@@ -292,6 +314,24 @@ router.get('/:clubId/events/:eventId/attendees', requireAuth, async (req, res) =
     username: r.profiles?.username ?? 'Unknown',
     avatar_url: r.profiles?.avatar_url ?? null,
   })));
+  res.status(204).end();
+});
+
+// DELETE /api/clubs/:clubId/events/:eventId/maybe — removes maybe
+router.delete('/:clubId/events/:eventId/maybe', requireAuth, async (req, res) => {
+  const { error } = await supabaseAdmin
+    .from('attendees')
+    .delete()
+    .eq('user_id', req.user.id)
+    .eq('event_id', req.params.eventId);
+
+  if (error) {
+    const err = new Error(error.message);
+    err.status = 502;
+    throw err;
+  }
+
+  res.status(204).end();
 });
 
 export default router;

@@ -83,7 +83,11 @@ function loadStored() {
     }
 }
 
-export default function ClubLinkTable({ onReview }) {
+// reloadKey: bumped by the parent after a review action. Statuses were fetched once on
+// mount and never again, so approving or requesting changes left the row showing the
+// status it had when the worksheet opened — the single clearest signal a reviewer has
+// that their click did anything.
+export default function ClubLinkTable({ onReview, reloadKey = 0 }) {
     const [clubs, setClubs] = useState(null);
     const [statuses, setStatuses] = useState({});
     const [links, setLinks] = useState(loadStored);
@@ -113,8 +117,11 @@ export default function ClubLinkTable({ onReview }) {
         apiFetch('/clubs', { auth: false })
             .then((d) => setClubs([...d].sort((a, b) => a.club_name.localeCompare(b.club_name))))
             .catch((e) => setError(e.message));
-        loadStatuses();
-    }, [loadStatuses]);
+    }, []);
+
+    // Separate from the club list above so a review action re-reads statuses without
+    // re-fetching every club on the site.
+    useEffect(() => { loadStatuses(); }, [loadStatuses, reloadKey]);
 
     const rows = useMemo(() => {
         // Search first so its ranking survives; filtering only removes.

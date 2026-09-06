@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../../supabaseAdmin.js';
 import { renderChangesRequestedEmail } from './changesRequestedEmail.js';
+import { ONBOARD_URL } from '../appUrls.js';
 
 const FROM = 'Backyard <clubs@explorethebackyard.com>';
 
@@ -23,11 +24,17 @@ export async function sendChangesRequestedEmail({ clubId, note }) {
             .eq('club_id', clubId)
             .maybeSingle();
 
-        if (!row?.claimed_by) return { sent: false, reason: 'no-claimant' };
+        if (!row?.claimed_by) {
+            console.warn(`[email] change request for club ${clubId} has no claimed_by — nobody to tell.`);
+            return { sent: false, reason: 'no-claimant' };
+        }
 
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(row.claimed_by);
         const to = authUser?.user?.email;
-        if (!to) return { sent: false, reason: 'no-email' };
+        if (!to) {
+            console.warn(`[email] claimant ${row.claimed_by} of club ${clubId} has no email address.`);
+            return { sent: false, reason: 'no-email' };
+        }
 
         const { data: profile } = await supabaseAdmin
             .from('profiles').select('first_name').eq('id', row.claimed_by).maybeSingle();
@@ -36,6 +43,10 @@ export async function sendChangesRequestedEmail({ clubId, note }) {
             clubName: row.demo_club_data?.club_name,
             firstName: profile?.first_name || null,
             note,
+            // Not the original claim link: that is hashed and unrecoverable, and expires
+            // 30 days after minting, so by review time it is usually dead. /resume is
+            // keyed on the signed-in account instead.
+            resumeUrl: ONBOARD_URL ? `${ONBOARD_URL}/resume` : null,
         });
 
         // Lazy, because server/lib/resend.js throws at import when the key is absent and
