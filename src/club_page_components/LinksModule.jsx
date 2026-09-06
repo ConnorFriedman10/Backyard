@@ -9,28 +9,24 @@ import { FiYoutube, FiGlobe } from 'react-icons/fi';
 import LinksTable from './LinksTable';
 import './LinksModule.css';
 
-const URL_KEYWORDS = [
-  ['instagram.com',  'instagram'],
-  ['fb.com',         'facebook'],
-  ['facebook.com',   'facebook'],
-  ['discord.gg',     'discord'],
-  ['discord.com',    'discord'],
-  ['open.spotify',   'spotify'],
-  ['spotify.com',    'spotify'],
-  ['tiktok.com',     'tiktok'],
-  ['linktr.ee',      'linktree'],
-  ['linktree.com',   'linktree'],
-  ['youtube.com',    'youtube'],
-  ['youtu.be',       'youtube'],
-  ['linkedin.com',   'linkedin'],
-  ['slack.com',      'slack'],
-  ['mailto:',        'email'],
+const NAME_KEYWORDS = [
+  ['instagram', 'instagram'],
+  ['facebook',  'facebook'],
+  ['discord',   'discord'],
+  ['spotify',   'spotify'],
+  ['tiktok',    'tiktok'],
+  ['linktree',  'linktree'],
+  ['youtube',   'youtube'],
+  ['linkedin',  'linkedin'],
+  ['slack',     'slack'],
+  ['email',     'email'],
+  ['mail',      'email'],
 ];
-function getLinkKeyword(url) {
-  if (!url) return 'external';
-  const u = url.toLowerCase();
-  for (const [fragment, platform] of URL_KEYWORDS) {
-    if (u.includes(fragment)) return platform;
+function getLinkKeyword(name) {
+  if (!name) return 'external';
+  const n = name.toLowerCase();
+  for (const [fragment, platform] of NAME_KEYWORDS) {
+    if (n.includes(fragment)) return platform;
   }
   return 'external';
 }
@@ -86,7 +82,7 @@ function LinksModule({ data, editing, onChange, warning }) {
       {enabledLinks.length > 0 ? (
         <div className="links-module-preview">
           {enabledLinks.map((link, i) => {
-            const keyword = getLinkKeyword(link.url);
+            const keyword = getLinkKeyword(link.name);
             const Icon = LINK_ICONS[keyword];
             return (
             <a
