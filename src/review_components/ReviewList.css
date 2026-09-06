@@ -308,11 +308,33 @@
     margin-bottom: 3px;
 }
 
+.comment-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .comment-date {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 0.95rem;
     color: #3A201F;
     transform: translateY(-10px);
+}
+
+.comment-delete-btn {
+    background: none;
+    border: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    color: #9C8E8C;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    transform: translateY(-10px);
+}
+
+.comment-delete-btn:hover {
+    color: #c0392b;
 }
 
 /* ===== Like button — stacked heart over count ===== */

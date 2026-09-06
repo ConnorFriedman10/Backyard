@@ -449,9 +449,15 @@
 
 .cal-form-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cal-footer-checks {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .cal-members-only-label {
@@ -490,8 +496,25 @@
 }
 
 .cal-submit-wrap {
-  flex: 1;
+  width: 100%;
+  flex: none;
 }
+
+/* Empty date/time inputs: hide the number placeholders (mm, dd, yyyy, hh, mm)
+   but keep the "/" and ":" separators visible */
+.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit-month-field,
+.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit-day-field,
+.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit-year-field,
+.cal-input[type="time"][data-empty="true"]::-webkit-datetime-edit-hours-field,
+.cal-input[type="time"][data-empty="true"]::-webkit-datetime-edit-minutes-field,
+.cal-input[type="time"][data-empty="true"]::-webkit-datetime-edit-ampm-field {
+  color: transparent;
+}
+.cal-input[type="date"][data-empty="true"]::-webkit-datetime-edit-text,
+.cal-input[type="time"][data-empty="true"]::-webkit-datetime-edit-text {
+  color: #ECE7E5;
+}
+
 
 .cal-submit-btn {
   width: 100%;

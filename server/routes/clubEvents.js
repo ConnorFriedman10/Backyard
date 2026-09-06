@@ -282,6 +282,15 @@ router.delete('/:clubId/events/:eventId/rsvp', requireAuth, async (req, res) => 
   res.status(204).end();
 });
 
+// GET /api/clubs/:clubId/events/:eventId/attendees — auth required
+// Returns the list of users who have RSVPd to an event, with profile data.
+router.get('/:clubId/events/:eventId/attendees', requireAuth, async (req, res) => {
+  const { eventId } = req.params;
+
+  const { data, error } = await supabaseAdmin
+    .from('attendees')
+    .select('user_id, profiles(username, avatar_url)')
+    .eq('event_id', eventId);
 // POST /api/clubs/:clubId/events/:eventId/maybe — marks user as "maybe"
 router.post('/:clubId/events/:eventId/maybe', requireAuth, async (req, res) => {
   const { error } = await supabaseAdmin
@@ -297,6 +306,14 @@ router.post('/:clubId/events/:eventId/maybe', requireAuth, async (req, res) => {
     throw err;
   }
 
+  const blockedIds = await getBlockedIds(req.user.id);
+  const filtered = filterBlocked(data, blockedIds, (r) => r.user_id);
+
+  res.json(filtered.map(r => ({
+    user_id: r.user_id,
+    username: r.profiles?.username ?? 'Unknown',
+    avatar_url: r.profiles?.avatar_url ?? null,
+  })));
   res.status(204).end();
 });
 

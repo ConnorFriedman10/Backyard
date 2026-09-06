@@ -5,6 +5,7 @@ import borderHorizontalImg from '../assets/border-horizontal.svg';
 import { CalendarExportRow } from './CalendarExportRow';
 import { useClubData } from '../context/useClubData';
 import FriendRsvpCallout from '../components/FriendRsvpCallout';
+import { apiFetch } from '../lib/api';
 import './CalendarModule.css';
 
 /**
@@ -43,6 +44,8 @@ export function CalendarModule({
 }) {
   const [overlayEvent, setOverlayEvent] = useState(null);
   const [overlayHasMore, setOverlayHasMore] = useState(false);
+  const [attendeesMap, setAttendeesMap] = useState({});
+  const [attendeesOpenId, setAttendeesOpenId] = useState(null);
   const [attendeesEvent, setAttendeesEvent] = useState(null);
   const [attendeesTab, setAttendeesTab] = useState('going');
 
@@ -68,6 +71,19 @@ export function CalendarModule({
     setOverlayHasMore(el.scrollHeight - el.scrollTop - el.clientHeight > 10);
   };
 
+  const fetchAttendees = async (eventId) => {
+    if (attendeesMap[eventId] !== undefined) {
+      setAttendeesOpenId(prev => prev === eventId ? null : eventId);
+      return;
+    }
+    try {
+      const data = await apiFetch(`/clubs/${club.id}/events/${eventId}/attendees`);
+      setAttendeesMap(prev => ({ ...prev, [eventId]: data }));
+      setAttendeesOpenId(eventId);
+    } catch {
+      setAttendeesMap(prev => ({ ...prev, [eventId]: [] }));
+      setAttendeesOpenId(eventId);
+    }
   const openAttendeesOverlay = (event, tab = 'going') => {
     setAttendeesEvent(event);
     setAttendeesTab(tab);
@@ -252,6 +268,30 @@ export function CalendarModule({
                         >
                           {evIsGoing ? 'Going ✓' : "I'm going!"}
                         </button>
+                      )}
+                      {userId && (
+                        <button
+                          className="cal-attendees-btn"
+                          onClick={() => fetchAttendees(ev.id)}
+                        >
+                          {attendeesOpenId === ev.id ? 'Hide attendees' : 'See who\'s going'}
+                        </button>
+                      )}
+                      {attendeesOpenId === ev.id && attendeesMap[ev.id] !== undefined && (
+                        <div className="cal-attendees-list">
+                          {attendeesMap[ev.id].length === 0 ? (
+                            <p className="cal-attendees-empty">No RSVPs yet.</p>
+                          ) : (
+                            attendeesMap[ev.id].map(a => (
+                              <div key={a.user_id} className="cal-attendee-row">
+                                {a.avatar_url
+                                  ? <img className="cal-attendee-avatar" src={a.avatar_url} alt="" />
+                                  : <div className="cal-attendee-avatar cal-attendee-avatar--placeholder" />}
+                                <span className="cal-attendee-name">{a.username}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
                       )}
                     </div>
                     <CalendarExportRow event={ev} preference={calendarPreference} />

@@ -1,13 +1,22 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { ClubGrid } from './ClubGrid';
 import ExpandedTile from "./ExpandedTile";
 import './ClubList.css';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
 
-export const ClubList = ({ results, cardSize = 'medium' }) => {
+export const ClubList = ({ results, cardSize = 'medium', autoExpandId = null }) => {
   const [expandedClub, setExpandedClub] = useState(null);
   const handleClose = useCallback(() => setExpandedClub(null), []);
+  const autoExpandedRef = useRef(false);
+
+  useEffect(() => {
+    if (!autoExpandId || autoExpandedRef.current || !results?.length) return;
+    const match = results.find(c => c.id === autoExpandId);
+    if (!match) return;
+    autoExpandedRef.current = true;
+    setExpandedClub(match);
+  }, [autoExpandId, results]);
 
   if ( !results || results.length === 0) {
     return <p>No clubs found.</p>;

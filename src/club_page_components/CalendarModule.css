@@ -388,6 +388,55 @@
   color: #4e7da9;
 }
 
+/* ===== ATTENDEES LIST ===== */
+.cal-attendees-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 8px;
+  color: #4e7da9;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.cal-attendees-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.cal-attendees-empty {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+}
+
+.cal-attendee-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-attendee-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cal-attendee-avatar--placeholder {
+  background: #ddd;
+}
+
+.cal-attendee-name {
+  font-size: 13px;
+  color: #333;
 /* ===== ACTION ROW (Interested + Maybe buttons) ===== */
 .cal-action-row {
   display: flex;

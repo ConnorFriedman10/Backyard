@@ -161,7 +161,7 @@ function StatsModule({ data, editing, onChange, warning }) {
                     onClick={() => removeStat(index)}
                     aria-label="Remove stat"
                 >
-                    x
+                    ✕
                 </button>
             </div>
         );

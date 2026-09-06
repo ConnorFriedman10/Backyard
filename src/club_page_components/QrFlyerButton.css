@@ -1,0 +1,13 @@
+.qr-flyer-btn {
+  background-color: #385a4a;
+  color: #ECE7E5;
+}
+
+.qr-flyer-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.duo-btn-pill:has(+ .qr-flyer-btn:disabled) {
+  opacity: 0.5;
+}

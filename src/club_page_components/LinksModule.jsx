@@ -5,14 +5,34 @@ import { IoIosMail } from 'react-icons/io';
 import { SlSocialSpotify } from 'react-icons/sl';
 import { SiLinktree } from 'react-icons/si';
 import { TbBrandDiscord } from 'react-icons/tb';
-import { FiYoutube } from 'react-icons/fi';
+import { FiYoutube, FiGlobe } from 'react-icons/fi';
 import LinksTable from './LinksTable';
 import './LinksModule.css';
 
-const LINK_KEYWORDS = ['instagram', 'facebook', 'discord', 'email', 'spotify', 'slack', 'tiktok', 'linktree', 'youtube', 'linkedin'];
-function getLinkKeyword(name) {
-  const n = (name || '').toLowerCase().trim();
-  return LINK_KEYWORDS.find((k) => n === k) || 'default';
+const URL_KEYWORDS = [
+  ['instagram.com',  'instagram'],
+  ['fb.com',         'facebook'],
+  ['facebook.com',   'facebook'],
+  ['discord.gg',     'discord'],
+  ['discord.com',    'discord'],
+  ['open.spotify',   'spotify'],
+  ['spotify.com',    'spotify'],
+  ['tiktok.com',     'tiktok'],
+  ['linktr.ee',      'linktree'],
+  ['linktree.com',   'linktree'],
+  ['youtube.com',    'youtube'],
+  ['youtu.be',       'youtube'],
+  ['linkedin.com',   'linkedin'],
+  ['slack.com',      'slack'],
+  ['mailto:',        'email'],
+];
+function getLinkKeyword(url) {
+  if (!url) return 'external';
+  const u = url.toLowerCase();
+  for (const [fragment, platform] of URL_KEYWORDS) {
+    if (u.includes(fragment)) return platform;
+  }
+  return 'external';
 }
 
 // Each of these renders a logo instead of the platform name text. Icons default to
@@ -28,6 +48,7 @@ const LINK_ICONS = {
   linktree: SiLinktree,
   slack: FaSlack,
   linkedin: FaLinkedinIn,
+  external: FiGlobe,
 };
 // Spotify's icon keeps the same green .link-btn--spotify already uses for its text,
 // instead of the white used everywhere else.
@@ -65,7 +86,7 @@ function LinksModule({ data, editing, onChange, warning }) {
       {enabledLinks.length > 0 ? (
         <div className="links-module-preview">
           {enabledLinks.map((link, i) => {
-            const keyword = getLinkKeyword(link.name);
+            const keyword = getLinkKeyword(link.url);
             const Icon = LINK_ICONS[keyword];
             return (
             <a
