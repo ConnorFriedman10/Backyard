@@ -291,14 +291,6 @@ router.get('/:clubId/events/:eventId/attendees', requireAuth, async (req, res) =
     .from('attendees')
     .select('user_id, profiles(username, avatar_url)')
     .eq('event_id', eventId);
-// POST /api/clubs/:clubId/events/:eventId/maybe — marks user as "maybe"
-router.post('/:clubId/events/:eventId/maybe', requireAuth, async (req, res) => {
-  const { error } = await supabaseAdmin
-    .from('attendees')
-    .upsert(
-      { user_id: req.user.id, event_id: req.params.eventId, status: 'maybe' },
-      { onConflict: 'user_id,event_id' }
-    );
 
   if (error) {
     const err = new Error(error.message);
@@ -314,6 +306,23 @@ router.post('/:clubId/events/:eventId/maybe', requireAuth, async (req, res) => {
     username: r.profiles?.username ?? 'Unknown',
     avatar_url: r.profiles?.avatar_url ?? null,
   })));
+});
+
+// POST /api/clubs/:clubId/events/:eventId/maybe — marks user as "maybe"
+router.post('/:clubId/events/:eventId/maybe', requireAuth, async (req, res) => {
+  const { error } = await supabaseAdmin
+    .from('attendees')
+    .upsert(
+      { user_id: req.user.id, event_id: req.params.eventId, status: 'maybe' },
+      { onConflict: 'user_id,event_id' }
+    );
+
+  if (error) {
+    const err = new Error(error.message);
+    err.status = 502;
+    throw err;
+  }
+
   res.status(204).end();
 });
 
